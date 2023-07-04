@@ -1,4 +1,0 @@
-Sample Text 123
-pepsi  :  soda
-one	number
-thing: also type
