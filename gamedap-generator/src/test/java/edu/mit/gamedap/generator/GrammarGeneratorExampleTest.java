@@ -7,7 +7,7 @@ import org.junit.Test;
 /**
  * Unit test for simple App.
  */
-public class GrammarGeneratorTest 
+public class GrammarGeneratorExampleTest 
 {
     /**
      * Rigorous Test :-)

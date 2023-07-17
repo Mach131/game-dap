@@ -7,7 +7,7 @@ import java.nio.file.*;
  * Hello world!
  *
  */
-public class GrammarGenerator 
+public class GrammarGeneratorExample 
 {
     private static final String TEST_GRAMMAR =
         "grammar GeneratedGrammar;\n" +
