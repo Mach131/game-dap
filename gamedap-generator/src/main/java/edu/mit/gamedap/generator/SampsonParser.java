@@ -71,7 +71,7 @@ public class SampsonParser {
    * 
    * @param text The input text
    * @return A mapping between characters and unique indices, such that every character in the input
-   * text appears in the output and the largest index is no greater than the size of the map.
+   * text appears in the output and the largest index is smaller than the size of the map.
    */
   Map<Character, Integer> buildCharacterSet(String text) {
     throw new UnsupportedOperationException("not yet implemented");
