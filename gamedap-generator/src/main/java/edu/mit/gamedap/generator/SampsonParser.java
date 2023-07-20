@@ -1,5 +1,6 @@
 package edu.mit.gamedap.generator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +56,14 @@ public class SampsonParser {
    * @return A list of length w substrings, where the ith element begins at the ith character of text.
    */
   List<String> makeSubstringVectors(String text) {
-    throw new UnsupportedOperationException("not yet implemented");
+    assert(this.w <= text.length());
+
+    List<String> result = new ArrayList<>();
+    for (int i = 0; i <= text.length() - this.w; i++) {
+      result.add(text.substring(i, i + this.w));
+    }
+
+    return result;
   }
 
   /**
