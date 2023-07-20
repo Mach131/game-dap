@@ -9,6 +9,39 @@ import java.util.Map;
 public class SampsonParser {
   private final int w;
 
+  /**
+   * Contains the results of running the SampsonParser.
+   */
+  public class ParseResults {
+    private final String recordFormat;
+    private final List<List<String>> recordFields;
+    
+    public ParseResults(String recordFormat, List<List<String>> recordFields) {
+      this.recordFormat = recordFormat;
+      this.recordFields = recordFields;
+    }
+
+    /**
+     * Provides a string indicating the structure of a single record, in regex form.
+     * 
+     * @return The record format
+     */
+    public String getRecordFormat() {
+      return recordFormat;
+    }
+
+    /**
+     * Provides a list of objects representing records. Each record is a list which contains
+     * the text interpreted as its "fields", i.e. the contiguous unpopular vectors found during
+     * parsing.
+     * 
+     * @return A list of identified record fields
+     */
+    public List<List<String>> getRecordFields() {
+      return recordFields;
+    }
+  }
+
   public SampsonParser(int w) {
     this.w = w;
   }
@@ -62,6 +95,18 @@ public class SampsonParser {
    * @return A mapping between every vector included in vectorClusters and their calculated popularity
    */
   Map<Vector<Integer>, Integer> calculateVectorPopularity(List<VectorCluster<Integer>> vectorClusters) {
+    throw new UnsupportedOperationException("not yet implemented");
+  }
+
+  /**
+   * Runs the full parsing algorithm on the input text, identifying popular vectors and interpreting those
+   * as being part of delimiters.
+   * 
+   * @param text The input text
+   * @return The results of parsing through Competitive Learning and Vector Quantization
+   * @see ParseResults
+   */
+  public ParseResults parse(String text) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 }
