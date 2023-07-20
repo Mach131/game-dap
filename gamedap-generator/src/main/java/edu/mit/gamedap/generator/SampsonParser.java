@@ -43,34 +43,56 @@ public class SampsonParser {
   }
 
   public SampsonParser(int w) {
+    assert(w > 0);
     this.w = w;
   }
 
   /**
-   * Create length w substrings of the input, where the ith element of the output begins at
-   * the ith character in the input.
+   * Create substrings of the input, based on the parameter w with which this parser was initialized.
+   * Assumes that w is at least 1 and is less than the length of the text.
+   * 
+   * @param text The input text
+   * @return A list of length w substrings, where the ith element begins at the ith character of text.
    */
-  Vector<String> makeSubstringVectors(String text) {
+  List<String> makeSubstringVectors(String text) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
   /**
-   * Create a fixed-length one-hot encoding of a character, where exactly one element of the output
-   * is equal to 1, every other element is equal to 0, and each character produces a unique output.
+   * Finds the set of characters used in an input text.
    * 
-   * Could initially be based off of ASCII values, but could also consider building a dictionary of
-   * all used characters by scanning through the input - would probably want to include the input
-   * text in a constructor
+   * @param text The input text
+   * @return A mapping between characters and unique indices, such that every character in the input
+   * text appears in the output and the largest index is no greater than the size of the map.
    */
-  Vector<Integer> oneHotEncoding(char c) {
+  Map<Character, Integer> buildCharacterSet(String text) {
+    throw new UnsupportedOperationException("not yet implemented");
+  }
+
+   /**
+    * Create a one-hot encoding of a character.
+    *
+    * @param c The character to encode
+    * @param characterSet {@link SampsonParser#buildCharacterSet(String) A mapping between characters and
+    * indices} that includes c
+    * @return A vector of the same size as characterSet, where the index corresponding to c is
+    * equal to 1 and every other element is equal to 0.
+    */
+  Vector<Integer> oneHotEncoding(char c, Map<Character, Integer> characterSet) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
   /**
    * Converts {@link SampsonParser#makeSubstringVectors(String) substring vectors} into concatenations of
    * their characters' {@link SampsonParser#oneHotEncoding(char) one-hot encodings}.
+   * 
+   * @param substringVectors A list of length w substrings
+   * @param characterSet {@link SampsonParser#buildCharacterSet(String) A mapping between characters and
+    * indices} that includes all characters in the substringVectors
+   * @return A list of vectors, such that every vector is a concatenation of the corresponding substrings'
+   * one-hot encodings (length = w * characterSet.size()).
    */
-  List<Vector<Integer>> convertSubstringVectors(Vector<String> substringVectors) {
+  List<Vector<Integer>> convertSubstringVectors(List<String> substringVectors, Map<Character, Integer> characterSet) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
