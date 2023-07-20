@@ -1,6 +1,7 @@
 package edu.mit.gamedap.generator;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
@@ -40,8 +41,6 @@ public class SampsonParser {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
-  // TODO: vector quantization for clustering; vectors should note their distance from the cluster definition point
-  //   will probably want details in a separate class; reference https://github.com/sampsyo/ap/blob/master/code/cl/__init__.py
   /**
    * Assigns one-hot vectors to clusters based on the Competitive Learning + Vector Quantization algorithm.
    * 
@@ -53,17 +52,16 @@ public class SampsonParser {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
-  // TODO: Refine clusters, use clusters to identify records
-
   /**
-   * Gives the euclidean distance between two vectors. Assumes that the inputs are equal in length.
-   * TODO: may move to VectorCluster class
+   * Calculates the popularity of all vectors within a set of vector clusters. This is originally set
+   * to the size of the cluster the vector belongs to; vectors far away from their cluster's center
+   * and clusters with low correlation between their vectors and center are "dropped" (popularity set to 0),
+   * and the remaining vectors may be weighted based by how close their popularity is to a global mode.
    * 
-   * @param a vector
-   * @param b vector
-   * @return Euclidean distance between a and b (sqrt of the sum of squared differences for each dimension)
+   * @param vectorClusters A list of vector clusters
+   * @return A mapping between every vector included in vectorClusters and their calculated popularity
    */
-  double euclideanDistance(List<Integer> a, List<Integer> b) {
+  Map<Vector<Integer>, Integer> calculateVectorPopularity(List<VectorCluster<Integer>> vectorClusters) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 }

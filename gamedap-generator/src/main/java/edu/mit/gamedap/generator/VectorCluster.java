@@ -1,5 +1,6 @@
 package edu.mit.gamedap.generator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,5 +15,11 @@ public class VectorCluster<T> {
     this.vectors = vectors;
   }
 
-  // TODO: methods to get center and vectors, something to find distance between center & vectors
+  public Vector<T> getCenter() {
+    return this.center;
+  }
+
+  public List<Vector<T>> getVectors() {
+    return new ArrayList<>(this.vectors);
+  }
 }

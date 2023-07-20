@@ -34,7 +34,7 @@
           </execution>
         </executions>
         <configuration>
-          <mainClass>edu.mit.gamedap.generator.GrammarGenerator</mainClass>
+          <mainClass>edu.mit.gamedap.generator.GrammarGeneratorExample</mainClass>
         </configuration>
       </plugin>
     </plugins>
