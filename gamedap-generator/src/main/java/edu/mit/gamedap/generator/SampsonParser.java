@@ -1,6 +1,8 @@
 package edu.mit.gamedap.generator;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -8,7 +10,14 @@ import java.util.Map;
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
  */
 public class SampsonParser {
+  private static final int DEFAULT_NEURON_COUNT = 100;
+  public static final double DEFAULT_LEARNING_RATE = 0.2;
+  private static final int DEFAULT_TRAINING_EPOCHS = 100;
+
   private final int w;
+  private final int neuronCount;
+  private final double learningRate;
+  private final int trainingEpochs;
 
   /**
    * Contains the results of running the SampsonParser.
@@ -46,6 +55,17 @@ public class SampsonParser {
   public SampsonParser(int w) {
     assert(w > 0);
     this.w = w;
+    this.neuronCount = DEFAULT_NEURON_COUNT;
+    this.learningRate = DEFAULT_LEARNING_RATE;
+    this.trainingEpochs = DEFAULT_TRAINING_EPOCHS;
+  }
+
+  public SampsonParser(int w, int neuronCount, int learningRate, int trainingEpochs) {
+    assert(w > 0);
+    this.w = w;
+    this.neuronCount = neuronCount;
+    this.learningRate = learningRate;
+    this.trainingEpochs = trainingEpochs;
   }
 
   /**
@@ -74,7 +94,14 @@ public class SampsonParser {
    * text appears in the output and the largest index is smaller than the size of the map.
    */
   Map<Character, Integer> buildCharacterSet(String text) {
-    throw new UnsupportedOperationException("not yet implemented");
+    Map<Character, Integer> result = new HashMap<>();
+    int idx = 0;
+    for (char c : text.toCharArray()) {
+      if (!result.containsKey(c)) {
+        result.put(c, idx++);
+      }
+    }
+    return result;
   }
 
    /**
@@ -87,21 +114,37 @@ public class SampsonParser {
     * equal to 1 and every other element is equal to 0.
     */
   Vector<Integer> oneHotEncoding(char c, Map<Character, Integer> characterSet) {
-    throw new UnsupportedOperationException("not yet implemented");
+    int targetIndex = characterSet.get(c);
+    List<Integer> values = new ArrayList<>(Collections.nCopies(characterSet.size(), 0));
+    values.set(targetIndex, 1);
+    return new Vector<>(values);
   }
 
   /**
    * Converts {@link SampsonParser#makeSubstringVectors(String) substring vectors} into concatenations of
    * their characters' {@link SampsonParser#oneHotEncoding(char) one-hot encodings}.
    * 
-   * @param substringVectors A list of length w substrings
+   * @param substrings A list of length w substrings
    * @param characterSet {@link SampsonParser#buildCharacterSet(String) A mapping between characters and
     * indices} that includes all characters in the substringVectors
    * @return A list of vectors, such that every vector is a concatenation of the corresponding substrings'
    * one-hot encodings (length = w * characterSet.size()).
    */
-  List<Vector<Integer>> convertSubstringVectors(List<String> substringVectors, Map<Character, Integer> characterSet) {
-    throw new UnsupportedOperationException("not yet implemented");
+  List<Vector<Integer>> convertSubstringVectors(List<String> substrings, Map<Character, Integer> characterSet) {
+    return substrings.stream()
+      .map(substring -> convertSubstringVector(substring, characterSet))
+      .toList();
+  }
+
+  /**
+   * Helper function for single substring
+   * @see SampsonParser#convertSubstringVectors
+   */
+  private Vector<Integer> convertSubstringVector(String substring, Map<Character, Integer> characterSet) {
+    return substring.chars()
+      .mapToObj(i -> (char) i)
+      .map(c -> oneHotEncoding(c, characterSet))
+      .reduce(new Vector<Integer>(), Vector::concat);
   }
 
   /**
@@ -112,7 +155,12 @@ public class SampsonParser {
    * @return A list of vector clusters, where each input vector is assigned to exactly one cluster
    */
   List<VectorCluster<Integer>> assignVectorClusters(List<Vector<Integer>> inputVectors) {
-    throw new UnsupportedOperationException("not yet implemented");
+    SequenceCompetitiveLearner learner = new SequenceCompetitiveLearner(this.neuronCount, this.learningRate, inputVectors);
+    learner.train(this.trainingEpochs);
+    Map<Vector<Integer>, List<Vector<Integer>>> clusterMap = learner.cluster();
+    return clusterMap.keySet().stream()
+      .map(center -> new VectorCluster<>(center, clusterMap.get(center)))
+      .toList();
   }
 
   /**
