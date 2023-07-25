@@ -9,33 +9,33 @@ import edu.mit.gamedap.generator.datatypes.Vector;
  * 
  * @see CompetitiveLearner
  */
-public class StringCompetitiveLearner extends CompetitiveLearner<String> {
+public class StringCompetitiveLearner extends CompetitiveLearner<Character> {
 
-  public StringCompetitiveLearner(int neuronCount, double learningRate, List<Vector<String>> stimuli) {
+  public StringCompetitiveLearner(int neuronCount, double learningRate, List<Vector<Character>> stimuli) {
     super(neuronCount, learningRate, stimuli);
     //TODO Auto-generated constructor stub
   }
 
   @Override
-  Vector<String> generateNeuron() {
+  Vector<Character> generateNeuron() {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'generateNeuron'");
   }
 
   @Override
-  double getNeuronActivation(Vector<String> neuron, Vector<String> stimulus) {
+  double getNeuronActivation(Vector<Character> neuron, Vector<Character> stimulus) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'getNeuronActivation'");
   }
 
   @Override
-  void trainSingleStimulus(Vector<String> stimulus) {
+  void trainSingleStimulus(Vector<Character> stimulus) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'trainSingleStimulus'");
   }
 
   @Override
-  int quantize(Vector<String> stimulus) {
+  int quantize(Vector<Character> stimulus) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'quantize'");
   }
