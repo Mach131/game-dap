@@ -68,7 +68,19 @@ public class StringVectorTest {
     }
   }
 
-  ////// randomize - omitted due to mostly just being randomElement
+  ////// randomize
+
+  @Test
+  public void testRandomize() {
+    Set<Character> characterSet = new HashSet<>(Arrays.asList('a', 'e', 'i', 'o', 'u'));
+    StringVector vector = new StringVector("aaaaa", characterSet);
+    vector.randomize();
+
+    assertEquals("Unexpected size after randomize", 5, vector.size());
+    for (int i = 0; i < 5; i ++) {
+      assertTrue("Unexpected randomized element", characterSet.contains(vector.get(i)));
+    }
+  }
 
   ////// distance
 

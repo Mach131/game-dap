@@ -7,7 +7,7 @@ package edu.mit.gamedap.generator.datatypes;
 public interface Vector<T> {
 
   /**
-   * Randomly re-initializes the values in the vector.
+   * Randomly re-initializes the values in the vector. Does not change the size.
    * 
    * @see Vector#randomElement()
    */
