@@ -1,8 +1,11 @@
 package edu.mit.gamedap.generator.datatypes;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,7 +17,8 @@ import java.util.stream.Collectors;
 public class StringVector implements Vector<Character> {
 
   private String value;
-  private Set<Character> characterSet;
+  private final Set<Character> characterSet;
+  private List<Character> characterList;
 
   /**
    * Initializes a new string vector with a given value. The vector size will be fixed according
@@ -47,42 +51,54 @@ public class StringVector implements Vector<Character> {
       this.value.chars()
       .mapToObj(c -> (char) c)
       .collect(Collectors.toSet()));
+    this.characterList = new ArrayList<>(characterSet);
   }
 
   @Override
   public void randomize() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'randomize'");
+    char[] newCharacters = new char[5];
+    for (int i = 0; i < this.size(); i ++) {
+      newCharacters[i] = this.randomElement();
+    }
+    this.value = new String(newCharacters);
   }
 
   @Override
   public Character randomElement() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'randomElement'");
+    Random random = new Random();
+    return this.characterList.get(random.nextInt(this.characterList.size()));
   }
 
   @Override
   public int size() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'size'");
+    return this.value.length();
   }
 
   @Override
   public Character get(int i) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'get'");
+    return this.value.charAt(i);
   }
 
   @Override
   public Character set(int i, Character v) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'set'");
+    char[] valueChars = this.value.toCharArray();
+    char oldChar = valueChars[i];
+    valueChars[i] = v;
+    this.value = new String(valueChars);
+    return oldChar;
   }
 
   @Override
   public double distance(Vector<Character> other) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'distance'");
+    assert(this.size() == other.size());
+
+    double distance = 0;
+    for (int i = 0; i < this.size(); i ++) {
+      if (this.get(i) != other.get(i)) {
+        distance += 1;
+      }
+    }
+    return distance;
   }
 
   @Override
