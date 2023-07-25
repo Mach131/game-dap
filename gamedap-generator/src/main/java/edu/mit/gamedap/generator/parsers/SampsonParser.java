@@ -96,11 +96,11 @@ public class SampsonParser {
    * @return A list of size w string vectors, where the ith element contains the substring beginning
    * at the ith character of text.
    */
-  List<Vector<String>> makeSubstringVectors(String text) {
+  List<Vector<Character>> makeSubstringVectors(String text) {
     assert(this.w <= text.length());
     Set<Character> characterSet = buildCharacterSet(text);
 
-    List<Vector<String>> result = new ArrayList<>();
+    List<Vector<Character>> result = new ArrayList<>();
     for (int i = 0; i <= text.length() - this.w; i++) {
       result.add(new StringVector(
         text.substring(i, i + this.w), characterSet));
@@ -115,7 +115,7 @@ public class SampsonParser {
    * @param inputVectors A list of string vectors, where each vector is expected to be of length w
    * @return A list of vector clusters, where each input string's vector is assigned to exactly one cluster
    */
-  List<VectorCluster<String>> assignVectorClusters(List<Vector<String>> substrings) {
+  List<VectorCluster<Character>> assignVectorClusters(List<Vector<Character>> substrings) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
@@ -128,7 +128,7 @@ public class SampsonParser {
    * @param vectorClusters A list of vector clusters
    * @return A mapping between every vector included in vectorClusters and their calculated popularity
    */
-  Map<Vector<String>, Double> calculateVectorPopularities(List<VectorCluster<String>> vectorClusters) {
+  Map<Vector<Character>, Double> calculateVectorPopularities(List<VectorCluster<Character>> vectorClusters) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
@@ -137,7 +137,7 @@ public class SampsonParser {
    * 
    * @see SampsonParser#calculateVectorPopularities(List)
    */
-  private Map<Vector<String>, Double> calculateSingleClusterPopularities(VectorCluster<String> vectorCluster) {
+  private Map<Vector<Character>, Double> calculateSingleClusterPopularities(VectorCluster<Character> vectorCluster) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 

@@ -69,6 +69,7 @@ public abstract class CompetitiveLearner<T> {
   /**
    * Returns the neurons selected to be trained by a given stimulus. Based on the activations returned
    * by {@link CompetitiveLearner#getNeuronActivation(Vector, Vector) getNeuronActivation}.
+   * 
    * @param stimulus The stimulus to train on
    * @param neuronCount The number of neurons to train
    * @return A list of neuronCount neurons with minimal activations with respect to stimulus.

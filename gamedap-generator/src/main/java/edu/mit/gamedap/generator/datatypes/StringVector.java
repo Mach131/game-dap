@@ -7,9 +7,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A vector implementation for short strings.
+ * A vector implementation for short strings. Distance is defined by the hamming distance
+ * (the number of characters that differ between two strings), and random elements are based
+ * on either the characters in the set string or a provided character set.
  */
-public class StringVector implements Vector<String> {
+public class StringVector implements Vector<Character> {
 
   private String value;
   private Set<Character> characterSet;
@@ -54,7 +56,7 @@ public class StringVector implements Vector<String> {
   }
 
   @Override
-  public String randomElement() {
+  public Character randomElement() {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'randomElement'");
   }
@@ -66,19 +68,19 @@ public class StringVector implements Vector<String> {
   }
 
   @Override
-  public String get(int i) {
+  public Character get(int i) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'get'");
   }
 
   @Override
-  public String set(int i, String v) {
+  public Character set(int i, Character v) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'set'");
   }
 
   @Override
-  public double distance(Vector<String> other) {
+  public double distance(Vector<Character> other) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'distance'");
   }
