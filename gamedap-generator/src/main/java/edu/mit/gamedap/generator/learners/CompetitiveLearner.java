@@ -1,8 +1,10 @@
-package edu.mit.gamedap.generator;
+package edu.mit.gamedap.generator.learners;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+
+import edu.mit.gamedap.generator.datatypes.Vector;
+import edu.mit.gamedap.generator.datatypes.VectorCluster;
 
 /**
  * Represents an environment for the competitive learning algorithm implemented in 
@@ -11,12 +13,12 @@ import java.util.Map;
  */
 public abstract class CompetitiveLearner<T> {
 
-  private final List<T> stimuli;
-  private final List<T> neurons;
+  private final List<Vector<T>> stimuli;
+  private final List<Vector<T>> neurons;
   private final double learningRate;
   private double progress;
 
-  public CompetitiveLearner(int neuronCount, double learningRate, List<T> stimuli) {
+  public CompetitiveLearner(int neuronCount, double learningRate, List<Vector<T>> stimuli) {
     this.stimuli = stimuli;
     this.learningRate = learningRate;
 
@@ -31,9 +33,9 @@ public abstract class CompetitiveLearner<T> {
   /**
    * Generates a new random neuron.
    * 
-   * @return A random object of the learning data type
+   * @return A random vector of the learning data type
    */
-  abstract T generateNeuron();
+  abstract Vector<T> generateNeuron();
 
   /**
    * Gets the activation of a neuron with respect to a stimulus. In a step of competitive learning,
@@ -43,16 +45,16 @@ public abstract class CompetitiveLearner<T> {
    * @param stimulus Stimulus to check
    * @return The activation of the neuron with respect to the stimulus
    */
-  abstract double getNeuronActivation(T neuron, T stimulus);
+  abstract double getNeuronActivation(Vector<T> neuron, Vector<T> stimulus);
 
   /**
    * Performs one step of training for a given stimulus. Will often use 
-   * {@link CompetitiveLearner#getWinningNeurons(T, int) getWinningNeuron(s)} to select a neuron
+   * {@link CompetitiveLearner#getWinningNeurons(Vector, int) getWinningNeuron(s)} to select a neuron
    * to modify based on the stimulus.
    * 
    * @param stimulus The stimulus to use for training
    */
-  abstract void trainSingleStimulus(T stimulus);
+  abstract void trainSingleStimulus(Vector<T> stimulus);
 
   /**
    * Returns the index of the neuron closest to the given stimulus. Assumes that neurons are present and
@@ -62,25 +64,25 @@ public abstract class CompetitiveLearner<T> {
    * @param stimulus The stimulus to quantize
    * @return The index of the nearest neuron
    */
-  abstract int quantize(T stimulus);
+  abstract int quantize(Vector<T> stimulus);
 
   /**
    * Returns the neurons selected to be trained by a given stimulus. Based on the activations returned
-   * by {@link CompetitiveLearner#getNeuronActivation(Object, Object) getNeuronActivation}.
+   * by {@link CompetitiveLearner#getNeuronActivation(Vector, Vector) getNeuronActivation}.
    * @param stimulus The stimulus to train on
    * @param neuronCount The number of neurons to train
    * @return A list of neuronCount neurons with minimal activations with respect to stimulus.
    */
-  List<T> getWinningNeurons(T stimulus, int neuronCount) {
+  List<Vector<T>> getWinningNeurons(Vector<T> stimulus, int neuronCount) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
   /**
    * Similar to getWinningNeurons, but returns a single neuron.
    * 
-   * @see CompetitiveLearner#getWinningNeurons(Object, int)
+   * @see CompetitiveLearner#getWinningNeurons(Vector, int)
    */
-  T getWinningNeuron(T stimulus) {
+  Vector<T> getWinningNeuron(Vector<T> stimulus) {
     return getWinningNeurons(stimulus, 1).get(0);
   }
 
@@ -89,7 +91,7 @@ public abstract class CompetitiveLearner<T> {
    * training will be done for every stimuli in a randomized order.
    * 
    * @param epochs the number of training iterations to perform
-   * @see CompetitiveLearner#trainSingleStimulus(Object)
+   * @see CompetitiveLearner#trainSingleStimulus(Vector)
    */
   public void train(int epochs) {
     throw new UnsupportedOperationException("not yet implemented");
@@ -97,12 +99,13 @@ public abstract class CompetitiveLearner<T> {
 
   /**
    * Groups the stimuli into clusters, mapping them to their nearest neuron (as indicated by
-   * {@link CompetitiveLearner#quantize(Object) quantize}). Assumes that neurons are present
+   * {@link CompetitiveLearner#quantize(Vector) quantize}). Assumes that neurons are present
    * and {@link CompetitiveLearner#train(int) training} has been completed.
    * 
-   * @return A mapping of neurons to a list of their clustered stimuli
+   * @return A list of clusters with neurons as the centers and stimuli as the clustered vectors, 
+   * where every stimulus is in exactly one cluster.
    */
-  public Map<T, List<T>> cluster() {
+  public List<VectorCluster<T>> cluster() {
     throw new UnsupportedOperationException("not yet implemented");
   }
 }

@@ -1,4 +1,4 @@
-package edu.mit.gamedap.generator;
+package edu.mit.gamedap.generator.datatypes;
 
 import java.util.ArrayList;
 import java.util.List;
