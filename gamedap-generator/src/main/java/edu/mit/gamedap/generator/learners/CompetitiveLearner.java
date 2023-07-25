@@ -18,13 +18,27 @@ public abstract class CompetitiveLearner<T> {
   private final double learningRate;
   private double progress;
 
-  public CompetitiveLearner(int neuronCount, double learningRate, List<Vector<T>> stimuli) {
-    this.stimuli = stimuli;
+  public CompetitiveLearner(double learningRate) {
     this.learningRate = learningRate;
-
+    this.stimuli = new ArrayList<>();
     this.neurons = new ArrayList<>();
+  }
+
+  /**
+   * Prepares the environment for learning, resetting the neurons and stimuli.
+   * 
+   * @param neuronCount The number of neurons to generate
+   * @param stimuli The stimuli to train on, assumed to be a non-empty list with vectors
+   * of a constant size.
+   */
+  public void initialize(int neuronCount, List<Vector<T>> stimuli) {
+    this.neurons.clear();
+    this.stimuli.clear();
+
+    this.stimuli.addAll(stimuli);
+    int size = stimuli.get(0).size();
     for (int i = 0; i < neuronCount; i++) {
-      this.neurons.add(this.generateNeuron());
+      this.neurons.add(this.generateNeuron(size));
     }
 
     this.progress = 0;
@@ -33,9 +47,10 @@ public abstract class CompetitiveLearner<T> {
   /**
    * Generates a new random neuron.
    * 
+   * @param size the size of the vectors to generate
    * @return A random vector of the learning data type
    */
-  abstract Vector<T> generateNeuron();
+  abstract Vector<T> generateNeuron(int size);
 
   /**
    * Gets the activation of a neuron with respect to a stimulus. In a step of competitive learning,

@@ -46,6 +46,19 @@ public class StringVector implements Vector<Character> {
     this.addValueCharactersToSet();
   }
 
+  /**
+   * Initializes a new string vector with a given size and character set. The contents of the vector
+   * will be randomized based on the provided characters.
+   * 
+   * @param size The size of the vector
+   * @param characterSet The set of characters to use for randomization
+   */
+  public StringVector(int size, Set<Character> characterSet) {
+    this.characterSet = characterSet;
+    this.characterList = new ArrayList<>(characterSet);
+    this.value = this.makeRandomString(size);
+  }
+
   private void addValueCharactersToSet() {
     this.characterSet.addAll(
       this.value.chars()
@@ -56,11 +69,15 @@ public class StringVector implements Vector<Character> {
 
   @Override
   public void randomize() {
-    char[] newCharacters = new char[5];
-    for (int i = 0; i < this.size(); i ++) {
+    this.value = this.makeRandomString(this.size());
+  }
+
+  private String makeRandomString(int size) {
+    char[] newCharacters = new char[size];
+    for (int i = 0; i < size; i ++) {
       newCharacters[i] = this.randomElement();
     }
-    this.value = new String(newCharacters);
+    return new String(newCharacters);
   }
 
   @Override

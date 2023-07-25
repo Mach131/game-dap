@@ -1,7 +1,9 @@
 package edu.mit.gamedap.generator.learners;
 
 import java.util.List;
+import java.util.Set;
 
+import edu.mit.gamedap.generator.datatypes.StringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 
 /**
@@ -11,15 +13,22 @@ import edu.mit.gamedap.generator.datatypes.Vector;
  */
 public class StringCompetitiveLearner extends CompetitiveLearner<Character> {
 
-  public StringCompetitiveLearner(int neuronCount, double learningRate, List<Vector<Character>> stimuli) {
-    super(neuronCount, learningRate, stimuli);
-    //TODO Auto-generated constructor stub
+  private final Set<Character> characterSet;
+
+  /**
+   * Initializes the learner with a set of characters to use for neuron generation.
+   * 
+   * @param learningRate The extent to which neurons are changed in a single learning step
+   * @param characterSet The set of characters to use for neuron generation
+   */
+  public StringCompetitiveLearner(double learningRate, Set<Character> characterSet) {
+    super(learningRate);
+    this.characterSet = characterSet;
   }
 
   @Override
-  Vector<Character> generateNeuron() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'generateNeuron'");
+  Vector<Character> generateNeuron(int size) {
+    return new StringVector(size, this.characterSet);
   }
 
   @Override
