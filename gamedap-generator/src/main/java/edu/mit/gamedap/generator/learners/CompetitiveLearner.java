@@ -68,18 +68,9 @@ public abstract class CompetitiveLearner<T> {
    * to modify based on the stimulus.
    * 
    * @param stimulus The stimulus to use for training
+   * @param learningRate The size of the learning adjustment to be made
    */
-  abstract void trainSingleStimulus(Vector<T> stimulus);
-
-  /**
-   * Returns the index of the neuron closest to the given stimulus. Assumes that neurons are present and
-   * {@link CompetitiveLearner#train(int) training} has been completed. The distance metric used is
-   * implementation-dependent.
-   * 
-   * @param stimulus The stimulus to quantize
-   * @return The index of the nearest neuron
-   */
-  abstract int quantize(Vector<T> stimulus);
+  abstract void trainSingleStimulus(Vector<T> stimulus, double learningRate);
 
   /**
    * Returns the neurons selected to be trained by a given stimulus. Based on the activations returned
@@ -107,9 +98,21 @@ public abstract class CompetitiveLearner<T> {
    * training will be done for every stimuli in a randomized order.
    * 
    * @param epochs the number of training iterations to perform
-   * @see CompetitiveLearner#trainSingleStimulus(Vector)
+   * @see CompetitiveLearner#trainSingleStimulus(Vector, Double)
    */
   public void train(int epochs) {
+    throw new UnsupportedOperationException("not yet implemented");
+  }
+
+  /**
+   * Returns the index of the neuron closest to the given stimulus. Assumes that neurons are present and
+   * {@link CompetitiveLearner#train(int) training} has been completed. The distance metric used is
+   * based on the vector type.
+   * 
+   * @param stimulus The stimulus to quantize
+   * @return The index of the nearest neuron
+   */
+  public int quantize(Vector<T> stimulus) {
     throw new UnsupportedOperationException("not yet implemented");
   }
 
