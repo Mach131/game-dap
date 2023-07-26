@@ -1,7 +1,9 @@
 package edu.mit.gamedap.generator.learners;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.SortedSet;
 
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
@@ -81,7 +83,10 @@ public abstract class CompetitiveLearner<T> {
    * @return A list of neuronCount neurons with minimal activations with respect to stimulus.
    */
   List<Vector<T>> getWinningNeurons(Vector<T> stimulus, int neuronCount) {
-    throw new UnsupportedOperationException("not yet implemented");
+    return this.neurons.stream()
+      .sorted(Comparator.comparingDouble(n -> this.getNeuronActivation(n, stimulus)))
+      .limit(neuronCount)
+      .toList();
   }
 
   /**
