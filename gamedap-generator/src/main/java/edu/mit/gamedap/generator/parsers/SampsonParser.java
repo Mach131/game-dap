@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import edu.mit.gamedap.generator.datatypes.StringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
+import edu.mit.gamedap.generator.learners.CompetitiveLearner;
+import edu.mit.gamedap.generator.learners.StringCompetitiveLearner;
 
 /**
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
@@ -93,12 +95,12 @@ public class SampsonParser {
    * Assumes that w is at least 1 and is less than the length of the text.
    * 
    * @param text The input text
+   * @param characterSet The set of all characters contained in the text
    * @return A list of size w string vectors, where the ith element contains the substring beginning
    * at the ith character of text.
    */
-  List<Vector<Character>> makeSubstringVectors(String text) {
+  List<Vector<Character>> makeSubstringVectors(String text, Set<Character> characterSet) {
     assert(this.w <= text.length());
-    Set<Character> characterSet = buildCharacterSet(text);
 
     List<Vector<Character>> result = new ArrayList<>();
     for (int i = 0; i <= text.length() - this.w; i++) {
@@ -110,13 +112,28 @@ public class SampsonParser {
   }
 
   /**
+   * @see SampsonParser#makeSubstringVectors(String, Set)
+   * 
+   * @param text The input text
+   * @return A list of size w string vectors, where the ith element contains the substring beginning
+   * at the ith character of text.
+   */
+  List<Vector<Character>> makeSubstringVectors(String text) {
+    Set<Character> characterSet = this.buildCharacterSet(text);
+    return this.makeSubstringVectors(text, characterSet);
+  }
+
+  /**
    * Assigns substrings to clusters based on the Competitive Learning + Vector Quantization algorithm.
    * 
    * @param inputVectors A list of string vectors, where each vector is expected to be of length w
+   * @param characterSet The set of all characters contained in the substrings
    * @return A list of vector clusters, where each input string's vector is assigned to exactly one cluster
    */
-  List<VectorCluster<Character>> assignVectorClusters(List<Vector<Character>> substrings) {
-    throw new UnsupportedOperationException("not yet implemented");
+  List<VectorCluster<Character>> assignVectorClusters(List<Vector<Character>> substrings, Set<Character> characterSet) {
+    CompetitiveLearner<Character> cl = new StringCompetitiveLearner(learningRate, characterSet);
+    cl.train(trainingEpochs);
+    return cl.cluster();
   }
 
   /**
