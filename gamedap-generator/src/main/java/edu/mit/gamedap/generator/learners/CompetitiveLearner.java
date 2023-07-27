@@ -2,8 +2,14 @@ package edu.mit.gamedap.generator.learners;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
@@ -18,7 +24,6 @@ public abstract class CompetitiveLearner<T> {
   private final List<Vector<T>> stimuli;
   private final List<Vector<T>> neurons;
   private final double learningRate;
-  private double progress;
 
   public CompetitiveLearner(double learningRate) {
     this.learningRate = learningRate;
@@ -42,8 +47,6 @@ public abstract class CompetitiveLearner<T> {
     for (int i = 0; i < neuronCount; i++) {
       this.neurons.add(this.generateNeuron(size));
     }
-
-    this.progress = 0;
   }
 
   /**
@@ -106,7 +109,11 @@ public abstract class CompetitiveLearner<T> {
    * @see CompetitiveLearner#trainSingleStimulus(Vector, Double)
    */
   public void train(int epochs) {
-    throw new UnsupportedOperationException("not yet implemented");
+    for (int epoch = 0; epoch < epochs; epoch++) {
+      for (Vector<T> stimulus : this.stimuli) {
+        this.trainSingleStimulus(stimulus, this.learningRate);
+      }
+    }
   }
 
   /**
@@ -118,7 +125,20 @@ public abstract class CompetitiveLearner<T> {
    * @return The index of the nearest neuron
    */
   public int quantize(Vector<T> stimulus) {
-    throw new UnsupportedOperationException("not yet implemented");
+    int idx = 0;
+    double minDist = this.neurons.get(0).distance(stimulus);
+
+    if (this.neurons.size() > 1) {
+      for (int i = 0; i < this.neurons.size(); i++) {
+        double dist = this.neurons.get(i).distance(stimulus);
+        if (dist < minDist) {
+          idx = i;
+          minDist = dist;
+        }
+      }
+    }
+    
+    return idx;
   }
 
   /**
@@ -130,6 +150,24 @@ public abstract class CompetitiveLearner<T> {
    * where every stimulus is in exactly one cluster.
    */
   public List<VectorCluster<T>> cluster() {
-    throw new UnsupportedOperationException("not yet implemented");
+    // Quantize all stimuli
+    List<Integer> quantizedIndices = this.stimuli.stream()
+      .map(s -> this.quantize(s))
+      .toList();
+
+    // Organize each stimulus under the corresponding neuron index
+    Map<Integer, List<Vector<T>>> quantizationMap = new HashMap<>();
+    for (int i = 0; i < quantizedIndices.size(); i++) {
+      int neuronIndex = quantizedIndices.get(i);
+      if (!quantizationMap.containsKey(neuronIndex)) {
+        quantizationMap.put(neuronIndex, new ArrayList<>());
+      }
+      quantizationMap.get(neuronIndex).add(this.stimuli.get(i));
+    }
+
+    // create VectorClusters
+    return quantizationMap.keySet().stream()
+      .map(n -> new VectorCluster<>(this.neurons.get(n), quantizationMap.get(n)))
+      .toList();
   }
 }
