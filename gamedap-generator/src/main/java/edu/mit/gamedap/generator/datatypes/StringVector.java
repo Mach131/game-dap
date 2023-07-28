@@ -119,6 +119,11 @@ public class StringVector implements Vector<Character> {
   }
 
   @Override
+  public String toString() {
+    return String.format("<StringVector: '%s'>", this.value);
+  }
+
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof StringVector)) {
       return false;

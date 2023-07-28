@@ -1,5 +1,6 @@
 package edu.mit.gamedap.generator.learners;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -50,9 +51,9 @@ public class StringCompetitiveLearner extends CompetitiveLearner<Character> {
    */
   private void trainSelectedNeuron(Vector<Character> stimulus, Vector<Character> neuron, double learningAmount) {
     // Find the differing indices if learningAmount is positive, or the matching ones if negative
-    List<Integer> targetIndices = IntStream.range(0, stimulus.size())
+    List<Integer> targetIndices = new ArrayList<>(IntStream.range(0, stimulus.size())
       .filter(i -> (stimulus.get(i) == neuron.get(i)) != (learningAmount >= 0))
-      .boxed().toList();
+      .boxed().toList());
 
     // Choose a random subset to modify
     int maxAdaptations = (int) Math.round(Math.ceil(Math.abs(stimulus.size() * learningAmount)));

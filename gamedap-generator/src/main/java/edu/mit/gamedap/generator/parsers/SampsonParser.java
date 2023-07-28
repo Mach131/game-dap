@@ -132,6 +132,7 @@ public class SampsonParser {
    */
   List<VectorCluster<Character>> assignVectorClusters(List<Vector<Character>> substrings, Set<Character> characterSet) {
     CompetitiveLearner<Character> cl = new StringCompetitiveLearner(learningRate, characterSet);
+    cl.initialize(neuronCount, substrings);
     cl.train(trainingEpochs);
     return cl.cluster();
   }
@@ -167,6 +168,15 @@ public class SampsonParser {
    * @see ParseResults
    */
   public ParseResults parse(String text) {
-    throw new UnsupportedOperationException("not yet implemented");
+    Set<Character> characterSet = buildCharacterSet(text);
+    List<Vector<Character>> substrings = makeSubstringVectors(text, characterSet);
+    List<VectorCluster<Character>> clusters = assignVectorClusters(substrings, characterSet);
+
+    for (VectorCluster<Character> cluster : clusters) {
+      System.out.println(cluster.info());
+    }
+    return null;
+
+    // throw new UnsupportedOperationException("not yet implemented");
   }
 }

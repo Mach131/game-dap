@@ -22,4 +22,13 @@ public class VectorCluster<T> {
   public List<Vector<T>> getVectors() {
     return new ArrayList<>(this.vectors);
   }
+
+  public String info() {
+    String vectorString = "[";
+    for (Vector<T> v : vectors) {
+      vectorString += v.toString() + "  ";
+    }
+    vectorString += "]";
+    return String.format("<VectorCluster: center=%s, vectors=%s", this.center.toString(), vectorString);
+  }
 }
