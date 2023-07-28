@@ -2,6 +2,7 @@ package edu.mit.gamedap.generator.parsers;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,11 +24,13 @@ public class SampsonParser {
   private static final int DEFAULT_NEURON_COUNT = 100;
   public static final double DEFAULT_LEARNING_RATE = 0.2;
   private static final int DEFAULT_TRAINING_EPOCHS = 100;
+  private static final double DEFAULT_CLUSTER_STDDEV_THRESH = 0.001;
 
   private final int w;
   private final int neuronCount;
   private final double learningRate;
   private final int trainingEpochs;
+  private final double clusterStddevThresh;
 
   /**
    * Contains the results of running the SampsonParser.
@@ -68,14 +71,16 @@ public class SampsonParser {
     this.neuronCount = DEFAULT_NEURON_COUNT;
     this.learningRate = DEFAULT_LEARNING_RATE;
     this.trainingEpochs = DEFAULT_TRAINING_EPOCHS;
+    this.clusterStddevThresh = DEFAULT_CLUSTER_STDDEV_THRESH;
   }
 
-  public SampsonParser(int w, int neuronCount, int learningRate, int trainingEpochs) {
+  public SampsonParser(int w, int neuronCount, int learningRate, int trainingEpochs, double clusterStddevThresh) {
     assert(w > 0);
     this.w = w;
     this.neuronCount = neuronCount;
     this.learningRate = learningRate;
     this.trainingEpochs = trainingEpochs;
+    this.clusterStddevThresh = clusterStddevThresh;
   }
 
   /**
@@ -147,7 +152,17 @@ public class SampsonParser {
    * @return A mapping between every vector included in vectorClusters and their calculated popularity
    */
   Map<Vector<Character>, Double> calculateVectorPopularities(List<VectorCluster<Character>> vectorClusters) {
-    throw new UnsupportedOperationException("not yet implemented");
+    Map<Vector<Character>, Double> result = new HashMap<>();
+    for (VectorCluster<Character> cluster : vectorClusters) {
+      if (cluster.getDistanceStdDev() < clusterStddevThresh) {
+        result.putAll(calculateSingleClusterPopularities(cluster));
+      } else {
+        for (Vector<Character> vector : cluster.getVectors()) {
+          result.put(vector, 0.0);
+        }
+      }
+    }
+    return result;
   }
 
   /**
@@ -156,7 +171,9 @@ public class SampsonParser {
    * @see SampsonParser#calculateVectorPopularities(List)
    */
   private Map<Vector<Character>, Double> calculateSingleClusterPopularities(VectorCluster<Character> vectorCluster) {
-    throw new UnsupportedOperationException("not yet implemented");
+    double size = vectorCluster.getVectors().size();
+    return vectorCluster.getVectors().stream()
+      .collect(Collectors.toMap(Function.identity(), x -> size));
   }
 
   /**
@@ -174,6 +191,13 @@ public class SampsonParser {
 
     for (VectorCluster<Character> cluster : clusters) {
       System.out.println(cluster.info());
+    }
+    System.out.println("---");
+    Map<Vector<Character>, Double> popularities = calculateVectorPopularities(clusters);
+    List<Vector<Character>> sortedVectors = new ArrayList<>(popularities.keySet());
+    Collections.sort(sortedVectors, Comparator.comparingDouble(v -> popularities.get(v)));
+    for (Vector<Character> vector : sortedVectors) {
+      System.out.println(String.format("%s -> %.2f", vector, popularities.get(vector)));
     }
     return null;
 
