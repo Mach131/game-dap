@@ -15,6 +15,7 @@ import edu.mit.gamedap.generator.datatypes.StringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
 import edu.mit.gamedap.generator.learners.CompetitiveLearner;
+import edu.mit.gamedap.generator.learners.FSCLStringLearner;
 import edu.mit.gamedap.generator.learners.StringCompetitiveLearner;
 
 /**
@@ -136,7 +137,7 @@ public class SampsonParser {
    * @return A list of vector clusters, where each input string's vector is assigned to exactly one cluster
    */
   List<VectorCluster<Character>> assignVectorClusters(List<Vector<Character>> substrings, Set<Character> characterSet) {
-    CompetitiveLearner<Character> cl = new StringCompetitiveLearner(learningRate, characterSet);
+    CompetitiveLearner<Character> cl = new FSCLStringLearner(learningRate, characterSet);
     cl.initialize(neuronCount, substrings);
     cl.train(trainingEpochs);
     return cl.cluster();
@@ -194,10 +195,8 @@ public class SampsonParser {
     }
     System.out.println("---");
     Map<Vector<Character>, Double> popularities = calculateVectorPopularities(clusters);
-    List<Vector<Character>> sortedVectors = new ArrayList<>(popularities.keySet());
-    Collections.sort(sortedVectors, Comparator.comparingDouble(v -> popularities.get(v)));
-    for (Vector<Character> vector : sortedVectors) {
-      System.out.println(String.format("%s -> %.2f", vector, popularities.get(vector)));
+    for (Vector<Character> vector : substrings) {
+      System.out.println(String.format("%s -> %.3f", vector, popularities.get(vector)));
     }
     return null;
 

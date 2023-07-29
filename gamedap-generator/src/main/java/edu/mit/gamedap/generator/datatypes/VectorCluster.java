@@ -59,7 +59,7 @@ public class VectorCluster<T> {
       vectorString += v.toString() + "  ";
     }
     vectorString += "]";
-    return String.format("<VectorCluster (stddev=%.2f): center=%s, vectors=%s",
+    return String.format("<VectorCluster (stddev=%.3f): center=%s, vectors=%s",
       this.getDistanceStdDev(), this.center.toString(), vectorString);
   }
 }

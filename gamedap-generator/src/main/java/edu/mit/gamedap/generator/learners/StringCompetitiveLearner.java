@@ -49,7 +49,7 @@ public class StringCompetitiveLearner extends CompetitiveLearner<Character> {
    * @param learningAmount The proportion of indices to be changed; elements in the neuron will become equal
    * to those in the stimulus if this is positive, and vice-versa if this is negative.
    */
-  private void trainSelectedNeuron(Vector<Character> stimulus, Vector<Character> neuron, double learningAmount) {
+  void trainSelectedNeuron(Vector<Character> stimulus, Vector<Character> neuron, double learningAmount) {
     // Find the differing indices if learningAmount is positive, or the matching ones if negative
     List<Integer> targetIndices = new ArrayList<>(IntStream.range(0, stimulus.size())
       .filter(i -> (stimulus.get(i) == neuron.get(i)) != (learningAmount >= 0))
