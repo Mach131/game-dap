@@ -198,6 +198,8 @@ public class SampsonParser {
     for (Vector<Character> vector : substrings) {
       System.out.println(String.format("%s -> %.3f", vector, popularities.get(vector)));
     }
+
+    
     return null;
 
     // throw new UnsupportedOperationException("not yet implemented");

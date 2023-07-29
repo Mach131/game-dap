@@ -31,8 +31,7 @@ public class GrammarGeneratorExample
 
     public static void main( String[] args ) {
         ClassLoader classLoader = new GrammarGeneratorExample().getClass().getClassLoader();
-        System.out.println(classLoader.getResource("structuredParseEx.txt"));
-        InputStream is = classLoader.getResourceAsStream("structuredParseEx.txt");
+        InputStream is = classLoader.getResourceAsStream("shortDialogueEx.txt");
         try {
             String inputText = IOUtils.toString(is, "UTF-8");
             System.out.println(inputText);

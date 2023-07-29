@@ -1,0 +1,7 @@
+Pit (excited): “I can’t believe I’m actually flying!”
+Palutena (confident): “The power of flight is my gift to you.”
+Palutena (neutral): “I’ll control your route so you can focus on battle.”
+Palutena (neutral): “But I can only maintain this power for five minutes at a time.”
+Palutena (concerned): “After that, your wings will burn up, and you’ll fall.”
+Pit (upset): “You have no idea how embarrassing it is to be an angel who can’t fly on his own.”
+Pit (serious): “So thanks for your help. Without you, I’d be finished!”
