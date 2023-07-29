@@ -20,7 +20,7 @@ public class FSCLStringLearner extends StringCompetitiveLearner {
   public FSCLStringLearner(double learningRate, Set<Character> characterSet) {
     super(learningRate, characterSet);
     this.neuronWins = new HashMap<>();
-    this.rivalPenalty = learningRate - 1;
+    this.rivalPenalty = -learningRate;
   }
 
   public FSCLStringLearner(double learningRate, double rivalPenalty, Set<Character> characterSet) {

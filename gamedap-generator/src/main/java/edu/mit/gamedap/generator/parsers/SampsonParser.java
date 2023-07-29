@@ -22,10 +22,10 @@ import edu.mit.gamedap.generator.learners.StringCompetitiveLearner;
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
  */
 public class SampsonParser {
-  private static final int DEFAULT_NEURON_COUNT = 100;
+  public static final int DEFAULT_NEURON_COUNT = 100;
   public static final double DEFAULT_LEARNING_RATE = 0.2;
-  private static final int DEFAULT_TRAINING_EPOCHS = 100;
-  private static final double DEFAULT_CLUSTER_STDDEV_THRESH = 0.001;
+  public static final int DEFAULT_TRAINING_EPOCHS = 100;
+  public static final double DEFAULT_CLUSTER_STDDEV_THRESH = 0.001;
 
   private final int w;
   private final int neuronCount;
@@ -75,7 +75,7 @@ public class SampsonParser {
     this.clusterStddevThresh = DEFAULT_CLUSTER_STDDEV_THRESH;
   }
 
-  public SampsonParser(int w, int neuronCount, int learningRate, int trainingEpochs, double clusterStddevThresh) {
+  public SampsonParser(int w, int neuronCount, double learningRate, int trainingEpochs, double clusterStddevThresh) {
     assert(w > 0);
     this.w = w;
     this.neuronCount = neuronCount;

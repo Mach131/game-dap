@@ -37,7 +37,8 @@ public class GrammarGeneratorExample
             String inputText = IOUtils.toString(is, "UTF-8");
             System.out.println(inputText);
             System.out.println("---");
-            SampsonParser sp = new SampsonParser(4);
+            SampsonParser sp = new SampsonParser(4, 200, SampsonParser.DEFAULT_LEARNING_RATE,
+                150, SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
             sp.parse(inputText);
         }  catch (IOException e) {
             System.out.println(e);
