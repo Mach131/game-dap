@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import edu.mit.gamedap.generator.Utils;
 import edu.mit.gamedap.generator.datatypes.StringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
@@ -63,6 +64,11 @@ public class SampsonParser {
      */
     public List<List<String>> getRecordFields() {
       return recordFields;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("<ParseResults: RecordFormat=%s, RecordFields=%s", getRecordFormat(), getRecordFields());
     }
   }
 
@@ -190,18 +196,180 @@ public class SampsonParser {
     List<Vector<Character>> substrings = makeSubstringVectors(text, characterSet);
     List<VectorCluster<Character>> clusters = assignVectorClusters(substrings, characterSet);
 
+    // TODO: break into helper methods
+
+    // Build popularity histogram
     for (VectorCluster<Character> cluster : clusters) {
       System.out.println(cluster.info());
     }
     System.out.println("---");
     Map<Vector<Character>, Double> popularities = calculateVectorPopularities(clusters);
+    Map<Double, Integer> popularityHistogram = new HashMap<>();
     for (Vector<Character> vector : substrings) {
-      System.out.println(String.format("%s -> %.3f", vector, popularities.get(vector)));
+      double p = popularities.get(vector);
+      System.out.println(String.format("%s -> %.3f", vector, p));
+      if (p > 0) {
+        popularityHistogram.put(p, popularityHistogram.getOrDefault(p, 0) + 1);
+      }
+    }
+    System.out.println(popularityHistogram);
+    double globalMode = popularityHistogram.keySet().stream()
+      .max(Comparator.comparingInt(p -> popularityHistogram.get(p))).get();
+    System.out.println(globalMode);
+    System.out.println("-----");
+
+
+    // Identify possible delimiters
+    boolean inDelimiter = false;
+    int delimiterStart = 0;
+    List<String> foundDelimiters = new ArrayList<>();
+    List<Integer> delimiterIndices = new ArrayList<>();
+    for (int i = 0; i < substrings.size(); i++) {
+      Vector<Character> substringVector = substrings.get(i);
+      if (!inDelimiter) {
+        if (popularities.get(substringVector) >= globalMode) {
+          delimiterStart = i;
+          inDelimiter = true;
+        }
+      } else {
+        if (popularities.get(substringVector) < globalMode) {
+          int delimiterEnd = Math.min(i + w - 1, text.length());
+          String delimiter = text.substring(delimiterStart, delimiterEnd);
+          System.out.println(String.format("[index %d] %s", delimiterStart, delimiter));
+
+          foundDelimiters.add(delimiter);
+          delimiterIndices.add(delimiterStart);
+          inDelimiter = false;
+        }
+      }
+    }
+    if (inDelimiter) {
+      int delimiterEnd = text.length();
+      String delimiter = text.substring(delimiterStart, delimiterEnd);
+      System.out.println(String.format("[index %d] %s", delimiterStart, delimiter));
+
+      foundDelimiters.add(delimiter);
+      delimiterIndices.add(delimiterStart);
+    }
+    // merge/"smooth out" delimiters, eliminating overlaps
+    List<String> delimiters = new ArrayList<>();
+    boolean merging = false;
+    int di = 0;
+    for (int i = 0; i < foundDelimiters.size() - 1; i++) {
+      if (delimiterIndices.get(i) + foundDelimiters.get(i).length() >= delimiterIndices.get(i+1)) {
+        int offset = foundDelimiters.get(i).length() - (delimiterIndices.get(i+1) - delimiterIndices.get(i));
+        String toAppend = foundDelimiters.get(i+1).substring(offset);
+        if (!merging) {
+          delimiters.add(foundDelimiters.get(i));
+        }
+        delimiters.add(di, delimiters.get(di) + toAppend);
+        merging = true;
+      } else {
+        delimiters.add(foundDelimiters.get(i));
+        merging = false;
+        di++;
+      }
+    }
+    System.out.println("----");
+    System.out.println(foundDelimiters);
+    System.out.println("after merge:");
+    System.out.println(delimiters);
+    System.out.println("----");
+
+    // Identify records by common patterns of delimiters
+    Map<String, Integer> delimiterHistogram = new HashMap<>();
+    for (String delimiter : delimiters) {
+      delimiterHistogram.put(delimiter, delimiterHistogram.getOrDefault(delimiter, 0) + 1);
+    }
+    System.out.println(delimiterHistogram);
+    int delimiterMode = delimiterHistogram.values().stream().reduce(0, (a, b) -> Math.max(a, b));
+    System.out.println(delimiterMode);
+
+    int startingIndex = 0;
+    // Tricky: choosing an appropriate "start of record", might be optimal to compare several possibilities
+    // Current approach: if mode is within a stddev of mean, use 1 stddev below mean; otherwise use mode
+    double delimiterMean = Utils.calculateIntegerMean(delimiterHistogram.values());
+    double delimiterSD = Utils.calculateIntegerStdDev(delimiterHistogram.values());
+    double threshold = delimiterMode;
+    if (Math.abs(delimiterMode - delimiterMean) <= delimiterSD) {
+      threshold = delimiterMean - delimiterSD;
+    }
+    for ( ; startingIndex < delimiters.size(); startingIndex++) {
+      if (delimiterHistogram.get(delimiters.get(startingIndex)) >= threshold) {
+        break;
+      }
+    }
+    String startingDelimiter = delimiters.get(startingIndex);
+    System.out.println(startingDelimiter);
+    
+    boolean buildingRecord = true;
+    List<String> recordDelimiters = new ArrayList<>();
+    List<String> comparisonRecord = new ArrayList<>();
+    recordDelimiters.add(startingDelimiter);
+    for (int i = startingIndex + 1; i < delimiters.size(); i++) {
+      if (delimiters.get(i).equals(startingDelimiter) || i == (delimiters.size() - 1)) {
+        if (!buildingRecord) {
+          // dynamic programming-ish thing to find common elements
+          List<Integer> removedIndices = new ArrayList<>();
+          int comparisonOffset = 0;
+          for (int d = 0; d < recordDelimiters.size(); d++) {
+            List<String> comparisonSublist = comparisonRecord.subList(comparisonOffset, comparisonRecord.size());
+            int delimiterIndex = comparisonSublist.indexOf(recordDelimiters.get(d));
+            comparisonOffset += delimiterIndex + 1;
+            if (delimiterIndex == -1) { // not found
+              removedIndices.add(d);
+            }
+          }
+          Collections.reverse(removedIndices);
+          for (int r : removedIndices) {
+            recordDelimiters.remove(r);
+          }
+        }
+
+        // System.out.println("-----");
+        // System.out.println(recordDelimiters);
+        // System.out.println("---");
+        // System.out.println(comparisonRecord);
+        buildingRecord = false;
+        comparisonRecord.clear();
+      }
+
+      if (buildingRecord) {
+        recordDelimiters.add(delimiters.get(i));
+      } else {
+        comparisonRecord.add(delimiters.get(i));
+      }
+    }
+    System.out.println("-----");
+    System.out.println(recordDelimiters);
+    // System.out.println("---");
+    // System.out.println(comparisonRecord);
+
+    List<List<String>> parsedFields = new ArrayList<>();
+    String currentText = text;
+    int lastDelimiterIndex = 0;
+    int currentDelimiterIndex = currentText.indexOf(recordDelimiters.get(0));
+    while (currentDelimiterIndex >= 0) {
+      List<String> currentSublist = new ArrayList<>();
+      lastDelimiterIndex = currentDelimiterIndex;
+      for (int i = 0; i < recordDelimiters.size(); i ++) {
+        int nextDelimiter = Math.floorMod(i + 1, recordDelimiters.size());
+        lastDelimiterIndex = currentDelimiterIndex + recordDelimiters.get(i).length();
+        currentDelimiterIndex = currentText.indexOf(recordDelimiters.get(nextDelimiter), lastDelimiterIndex);
+
+        if (currentDelimiterIndex < 0) {
+          break;
+        }
+        String fieldValue = text.substring(lastDelimiterIndex, currentDelimiterIndex);
+        currentSublist.add(fieldValue);
+      }
+      parsedFields.add(currentSublist);
     }
 
-    
-    return null;
-
-    // throw new UnsupportedOperationException("not yet implemented");
+    String recordFormat = recordDelimiters.stream()
+      .reduce("", (a, b) -> a + ".*" + b);
+    ParseResults results = new ParseResults(recordFormat, parsedFields);
+    System.out.println("-------");
+    return results;
   }
 }
