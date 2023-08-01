@@ -1,0 +1,44 @@
+SEQUENCE #1 - Pom Gets Wifi
+SCENE START
+
+MUSIC bgm_song
+
+SPRITE spr_shibe @ left
+
+Shibe: "Do you mind moving aside a little?"
+Shibe: "We're trying to cross that bridge behind you."
+
+SPRITE spr_labra @ right
+
+Labra: "No can do."
+
+SPRITE spr_alma @ right
+
+Alma: "We're been in this line for an awful long time now, and it'd be simply terrierable if we lost our place."
+
+SPRITE spr_labra @ right
+
+Labra: "Here, you can have these old Barron's SAT books as our apology."
+
+SPRITE spr_shibe @ left
+
+Shibe: "Wait, we don't want these."
+
+SPRITE spr_labra @ right
+
+Labra: "Alma, isn't the weather today splendid?"
+
+SPRITE spr_alma @ right
+
+Alma: "Not a cloud in the sky, as usual!"
+Alma: "Discounting the one we're standing on, of course."
+
+SPRITE spr_pom @ left
+
+Pom: "theyre ignoring u"
+
+SPRITE spr_shibe @ left
+
+Shibe: "They just unloaded a bunch of crap they don't want on us…"
+
+SCENE END
