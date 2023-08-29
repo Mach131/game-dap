@@ -20,16 +20,16 @@ public class Utils {
       .reduce(0, Integer::sum) / values.size();
   }
 
-  public static Map<Object, Integer> makeHistogram(Collection<Object> values) {
-    Map<Object, Integer> result = new HashMap<>();
-    for (Object x : values) {
+  public static <T> Map<T, Integer> makeHistogram(Collection<T> values) {
+    Map<T, Integer> result = new HashMap<>();
+    for (T x : values) {
       result.put(x, result.getOrDefault(x, 0) + 1);
     }
     return result;
   }
 
-  public static Object calculateMode(Collection<Object> values) {
-    Map<Object, Integer> histogram = makeHistogram(values);
+  public static <T> T mostFrequentElement(Collection<T> values) {
+    Map<T, Integer> histogram = makeHistogram(values);
     return histogram.keySet().stream()
       .max(Comparator.comparingInt(p -> histogram.get(p))).get();
   }

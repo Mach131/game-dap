@@ -173,6 +173,52 @@ public class SampsonParser {
   }
 
   /**
+   * Identifies possible delimiters by combining contiguous substring vectors exceeding a given popularity
+   * threshold.
+   * @param text The input text
+   * @param substringVectors A list of substring vectors from the text
+   * @param popularities A mapping of substring vectors to popularities, including all provided substringVectors
+   * @param popularityThreshold The threshold used to identify delimiter substring vectors
+   * 
+   * @return A list of the identified delimiter candidates, in the order they appear
+   */
+  private List<String> findDelimiters(String text, List<Vector<Character>> substringVectors,
+      Map<Vector<Character>, Double> popularities, double popularityThreshold) {
+    List<Integer> delimiterStarts = new ArrayList<>();
+    List<Integer> delimiterEnds = new ArrayList<>();
+    int lastDelimiterEnd = -1;
+    int delimitersFound = 0;
+
+    // Identify regions of text with delimiters
+    for (int i = 0; i < substringVectors.size(); i++) {
+      Vector<Character> vector = substringVectors.get(i);
+      if (popularities.get(vector) >= popularityThreshold) {
+        // Check if this can be merged with the previous delimiter
+        if (i <= lastDelimiterEnd) {
+          lastDelimiterEnd = i + w;
+          delimiterEnds.set(delimitersFound - 1, lastDelimiterEnd);
+        } else {
+          delimiterStarts.add(i);
+          lastDelimiterEnd = i + w;
+          delimiterEnds.add(lastDelimiterEnd);
+          delimitersFound ++;
+        }
+      }
+    }
+
+    // Map regions to text
+    List<String> delimiterText = new ArrayList<>();
+    for (int i = 0; i < delimitersFound; i++) {
+      int start = delimiterStarts.get(i);
+      int end = Math.min(delimiterEnds.get(i), text.length());
+      String delimiter = text.substring(start, end);
+      delimiterText.add(delimiter);
+    }
+
+    return delimiterText;
+  }
+
+  /**
    * Helper function that calculates popularities within a single cluster, assuming it hasn't been dropped.
    * 
    * @see SampsonParser#calculateVectorPopularities(List)
@@ -204,83 +250,19 @@ public class SampsonParser {
     }
     System.out.println("---");
     Map<Vector<Character>, Double> popularities = calculateVectorPopularities(clusters);
-    Map<Double, Integer> popularityHistogram = new HashMap<>();
-    for (Vector<Character> vector : substrings) {
-      double p = popularities.get(vector);
-      System.out.println(String.format("%s -> %.3f", vector, p));
-      if (p > 0) {
-        popularityHistogram.put(p, popularityHistogram.getOrDefault(p, 0) + 1);
-      }
-    }
-    System.out.println(popularityHistogram);
-    double globalMode = popularityHistogram.keySet().stream()
-      .max(Comparator.comparingInt(p -> popularityHistogram.get(p))).get();
-    System.out.println(globalMode);
+    
+    System.out.println(Utils.makeHistogram(popularities.values().stream().filter(x -> x>0).toList()));
+    double globalMode = Utils.mostFrequentElement(popularities.values().stream().filter(x -> x>0).toList());
     System.out.println("-----");
 
-
     // Identify possible delimiters
-    boolean inDelimiter = false;
-    int delimiterStart = 0;
-    List<String> foundDelimiters = new ArrayList<>();
-    List<Integer> delimiterIndices = new ArrayList<>();
-    for (int i = 0; i < substrings.size(); i++) {
-      Vector<Character> substringVector = substrings.get(i);
-      if (!inDelimiter) {
-        if (popularities.get(substringVector) >= globalMode) {
-          delimiterStart = i;
-          inDelimiter = true;
-        }
-      } else {
-        if (popularities.get(substringVector) < globalMode) {
-          int delimiterEnd = Math.min(i + w - 1, text.length());
-          String delimiter = text.substring(delimiterStart, delimiterEnd);
-          System.out.println(String.format("[index %d] %s", delimiterStart, delimiter));
-
-          foundDelimiters.add(delimiter);
-          delimiterIndices.add(delimiterStart);
-          inDelimiter = false;
-        }
-      }
-    }
-    if (inDelimiter) {
-      int delimiterEnd = text.length();
-      String delimiter = text.substring(delimiterStart, delimiterEnd);
-      System.out.println(String.format("[index %d] %s", delimiterStart, delimiter));
-
-      foundDelimiters.add(delimiter);
-      delimiterIndices.add(delimiterStart);
-    }
-    // merge/"smooth out" delimiters, eliminating overlaps
-    List<String> delimiters = new ArrayList<>();
-    boolean merging = false;
-    int di = 0;
-    for (int i = 0; i < foundDelimiters.size() - 1; i++) {
-      if (delimiterIndices.get(i) + foundDelimiters.get(i).length() >= delimiterIndices.get(i+1)) {
-        int offset = foundDelimiters.get(i).length() - (delimiterIndices.get(i+1) - delimiterIndices.get(i));
-        String toAppend = foundDelimiters.get(i+1).substring(offset);
-        if (!merging) {
-          delimiters.add(foundDelimiters.get(i));
-        }
-        delimiters.add(di, delimiters.get(di) + toAppend);
-        merging = true;
-      } else {
-        delimiters.add(foundDelimiters.get(i));
-        merging = false;
-        di++;
-      }
-    }
+    List<String> delimiters = findDelimiters(text, substrings, popularities, globalMode);
     System.out.println("----");
-    System.out.println(foundDelimiters);
-    System.out.println("after merge:");
     System.out.println(delimiters);
     System.out.println("----");
 
     // Identify records by common patterns of delimiters
-    Map<String, Integer> delimiterHistogram = new HashMap<>();
-    for (String delimiter : delimiters) {
-      delimiterHistogram.put(delimiter, delimiterHistogram.getOrDefault(delimiter, 0) + 1);
-    }
+    Map<String, Integer> delimiterHistogram = Utils.makeHistogram(delimiters);
     System.out.println(delimiterHistogram);
     int delimiterMode = delimiterHistogram.values().stream().reduce(0, (a, b) -> Math.max(a, b));
     System.out.println(delimiterMode);
