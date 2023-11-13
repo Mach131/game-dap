@@ -28,7 +28,7 @@ public class Utils {
     return result;
   }
 
-  public static <T> T mostFrequentElement(Collection<T> values) {
+  public static <T> T calculateMode(Collection<T> values) {
     Map<T, Integer> histogram = makeHistogram(values);
     return histogram.keySet().stream()
       .max(Comparator.comparingInt(p -> histogram.get(p))).get();

@@ -173,6 +173,17 @@ public class SampsonParser {
   }
 
   /**
+   * Helper function that calculates popularities within a single cluster, assuming it hasn't been dropped.
+   * 
+   * @see SampsonParser#calculateVectorPopularities(List)
+   */
+  private Map<Vector<Character>, Double> calculateSingleClusterPopularities(VectorCluster<Character> vectorCluster) {
+    double size = vectorCluster.getVectors().size();
+    return vectorCluster.getVectors().stream()
+      .collect(Collectors.toMap(Function.identity(), x -> size));
+  }
+
+  /**
    * Identifies possible delimiters by combining contiguous substring vectors exceeding a given popularity
    * threshold.
    * @param text The input text
@@ -219,14 +230,38 @@ public class SampsonParser {
   }
 
   /**
-   * Helper function that calculates popularities within a single cluster, assuming it hasn't been dropped.
+   * Given a list of delimiter candidates, identifies one which is most probably the beginning of a
+   * recurring "record" pattern.
    * 
-   * @see SampsonParser#calculateVectorPopularities(List)
+   * A bit of an open problem.
+   * 
+   * @param delimiters A non-empty list of ordered delimiter candidates, as from
+   * {@link SampsonParser#findDelimiters(String, List, Map, double) findDelimiters}.
+   * @return The index of a selected starting delimiter in the delimiters list.
    */
-  private Map<Vector<Character>, Double> calculateSingleClusterPopularities(VectorCluster<Character> vectorCluster) {
-    double size = vectorCluster.getVectors().size();
-    return vectorCluster.getVectors().stream()
-      .collect(Collectors.toMap(Function.identity(), x -> size));
+  private int selectStartingDelimiterIndex(List<String> delimiters) {
+    Map<String, Integer> delimiterHistogram = Utils.makeHistogram(delimiters);
+
+    // TODO: account for substrings (basic idea may be to find an initial candidate and test?)
+
+    // Concept is that delimiters that are part of the "record" should appear around the same number of times
+    //   Should note that some fields are optional, might not appear in every record; should handle this
+    //    when forming records (make this part of a larger function? would want to form histogram there)
+
+    // For now, select the first delimiter whose appearance count is within a standard deviation
+    //    of the mean
+    double delimiterMean = Utils.calculateIntegerMean(delimiterHistogram.values());
+    double delimiterSD = Utils.calculateIntegerStdDev(delimiterHistogram.values());
+
+    int startingIndex = 0;
+    for (int i = 0; i < delimiters.size(); i++) {
+      if (Math.abs(delimiterHistogram.get(delimiters.get(i)) - delimiterMean) <= delimiterSD) {
+        startingIndex = i;
+        break;
+      }
+    }
+
+    return startingIndex;
   }
 
   /**
@@ -252,7 +287,7 @@ public class SampsonParser {
     Map<Vector<Character>, Double> popularities = calculateVectorPopularities(clusters);
     
     System.out.println(Utils.makeHistogram(popularities.values().stream().filter(x -> x>0).toList()));
-    double globalMode = Utils.mostFrequentElement(popularities.values().stream().filter(x -> x>0).toList());
+    double globalMode = Utils.calculateMode(popularities.values().stream().filter(x -> x>0).toList());
     System.out.println("-----");
 
     // Identify possible delimiters
@@ -262,6 +297,9 @@ public class SampsonParser {
     System.out.println("----");
 
     // Identify records by common patterns of delimiters
+    // TODO: test and replace with selectStartingDelimiterIndex
+
+    /**start of replaced piece */
     Map<String, Integer> delimiterHistogram = Utils.makeHistogram(delimiters);
     System.out.println(delimiterHistogram);
     int delimiterMode = delimiterHistogram.values().stream().reduce(0, (a, b) -> Math.max(a, b));
@@ -283,6 +321,14 @@ public class SampsonParser {
     }
     String startingDelimiter = delimiters.get(startingIndex);
     System.out.println(startingDelimiter);
+    /** end of replaced piece */
+
+
+    //TODO: replace this, especially once the substring issue is handled
+    // instead of requiring strict matching, may want to collect a list of how all of the sub-lists
+    //   between the starter, comparing them to find patterns that are "close enough" for some definition
+    // will require more examples to fully analyze, but might be able to do some form of statistical analysis
+    //   of how often a given token is in the right position
     
     boolean buildingRecord = true;
     List<String> recordDelimiters = new ArrayList<>();
