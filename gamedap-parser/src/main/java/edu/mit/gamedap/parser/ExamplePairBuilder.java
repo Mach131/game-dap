@@ -16,8 +16,9 @@ public class ExamplePairBuilder extends GeneratedGrammarBaseListener {
 
     @Override
     public void enterPair(PairContext ctx) {
-        List<TerminalNode> pairNodes = ctx.TEXT();
-        ExamplePair newPair = new ExamplePair(pairNodes.get(0).getText(), pairNodes.get(1).getText());
-        this.pairs.add(newPair);
+        String pairTree = ctx.toStringTree();
+        System.out.println(pairTree);
+        // ExamplePair newPair = new ExamplePair(pairNodes.get(0).getText(), pairNodes.get(1).getText());
+        // this.pairs.add(newPair);
     }
 }

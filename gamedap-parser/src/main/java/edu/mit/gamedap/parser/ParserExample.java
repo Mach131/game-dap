@@ -16,8 +16,8 @@ public class ParserExample
     {
         try {
             ClassLoader classLoader = new ParserExample().getClass().getClassLoader();
-            System.out.println(classLoader.getResource("testInput.txt"));
-            InputStream is = classLoader.getResourceAsStream("testInput.txt");
+            System.out.println(classLoader.getResource("structuredParseEx.txt"));
+            InputStream is = classLoader.getResourceAsStream("structuredParseEx.txt");
             GeneratedGrammarLexer lexer = new GeneratedGrammarLexer(CharStreams.fromStream(is));
 
             CommonTokenStream tokens = new CommonTokenStream(lexer);
