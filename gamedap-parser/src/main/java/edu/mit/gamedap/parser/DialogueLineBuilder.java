@@ -43,6 +43,8 @@ public class DialogueLineBuilder extends GeneratedGrammarBaseListener {
 
     @Override
     public void enterPair(PairContext ctx) {
+        System.out.println(ctx.getText());
+
         // Locate delimiters in the context
         List<Integer> delimTokenIndex = new ArrayList<>();
         for (int i = 0; i < this.delimiterCount; i ++) {
@@ -55,6 +57,12 @@ public class DialogueLineBuilder extends GeneratedGrammarBaseListener {
         List<String> presentDelims = new ArrayList<>();
         dialogueParts.add("");
         for (int i = 0; i < ctx.children.size(); i ++) {
+            while (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) == -1) {
+                presentDelims.add("");
+                currentPart ++;
+                dialogueParts.add("");
+            }
+
             if (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) == i) {
                 do {
                     presentDelims.add(ctx.children.get(i).getText());
@@ -62,12 +70,6 @@ public class DialogueLineBuilder extends GeneratedGrammarBaseListener {
                     dialogueParts.add("");
                 } while (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) != -1);
             } else {
-                while (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) == -1) {
-                    presentDelims.add("");
-                    currentPart ++;
-                    dialogueParts.add("");
-                }
-
                 dialogueParts.set(currentPart, dialogueParts.get(currentPart) + ctx.children.get(i).getText());
             }
         }

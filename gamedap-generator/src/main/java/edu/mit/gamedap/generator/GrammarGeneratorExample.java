@@ -36,8 +36,8 @@ public class GrammarGeneratorExample
         "grammar GeneratedGrammar;\n" +
         "section\n" +
         "    : (title)? (pair)+ EOF ;\n" +
-        "title: NOT_TOKEN0+ NEW_LINE ;\n" +
-        "pair: (NOT_TOKEN0 | NEW_LINE)* ";
+        "title: (NOT_TOKEN0 | NEW_LINE)+ ;\n" +
+        "pair: ";
     private static final String BASIC_FORMAT_LEXER =
         "// default lexer\n" +
         "NEW_LINE : [\\n\\r\\f]+ ;";
@@ -69,8 +69,10 @@ public class GrammarGeneratorExample
                 generatedLexer += String.format("TOKEN%s : '%s' ;\n", i, recordDelimiters.get(i));
                 generatedLexer += String.format("NOT_TOKEN%s : %s ;\n", i, makeNegationToken(recordDelimiters.get(i)));
 
-                generatedParser += String.format("TOKEN%s (NOT_TOKEN%s | NEW_LINE)* ",
-                    i, (i+1) % recordDelimiters.size());
+                int nextIdx = (i+1) % recordDelimiters.size();
+                String chainSymbol = nextIdx == 0 ? "+" : "*";
+                generatedParser += String.format("TOKEN%s? (NOT_TOKEN%s | NEW_LINE)%s ",
+                    i, nextIdx, chainSymbol);
             }
             String temp_generated_grammar = BASIC_FORMAT_START + generatedParser + ";\n" +
                 generatedLexer + BASIC_FORMAT_LEXER;
