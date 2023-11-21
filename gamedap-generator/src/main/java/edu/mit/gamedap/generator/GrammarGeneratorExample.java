@@ -44,12 +44,12 @@ public class GrammarGeneratorExample
 
     public static void main( String[] args ) {
         ClassLoader classLoader = new GrammarGeneratorExample().getClass().getClassLoader();
-        InputStream is = classLoader.getResourceAsStream("structuredParseEx.txt");
+        InputStream is = classLoader.getResourceAsStream("shortDialogueEx.txt");
         try {
             String inputText = IOUtils.toString(is, "UTF-8");
             System.out.println(inputText);
             System.out.println("---");
-            SampsonParser sp = new SampsonParser(4, 300, SampsonParser.DEFAULT_LEARNING_RATE,
+            SampsonParser sp = new SampsonParser(3, 300, SampsonParser.DEFAULT_LEARNING_RATE,
                 250, SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
             ParseResults results = sp.parse(inputText);
             System.out.println(results.getRecordFormat());
