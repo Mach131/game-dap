@@ -49,9 +49,9 @@ public class ParserExample
             DialogueLineBuilder listener = new DialogueLineBuilder(vocabMap);
 
             walker.walk(listener, tree);
-            // for (DialogueLine pair : listener.getLines()) {
-            //     System.out.println(pair);
-            // }
+            for (DialogueLine pair : listener.getLines()) {
+                System.out.println(pair);
+            }
 
             List<String> colorHexes = generateHighlightColors(listener.getDelimiterCount() + 1);
             // for (String hex : colorHexes) {

@@ -55,19 +55,19 @@ public class DialogueLineBuilder extends GeneratedGrammarBaseListener {
         List<String> presentDelims = new ArrayList<>();
         dialogueParts.add("");
         for (int i = 0; i < ctx.children.size(); i ++) {
-            if (currentPart < delimTokenIndex.size() &&
-                    (delimTokenIndex.get(currentPart) == i || delimTokenIndex.get(currentPart) == -1)) {
+            if (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) == i) {
                 do {
-                    if (delimTokenIndex.get(currentPart) != -1) {
-                        presentDelims.add(ctx.children.get(i).getText());
-                    } else {
-                        presentDelims.add("");
-                    }
-
+                    presentDelims.add(ctx.children.get(i).getText());
                     currentPart ++;
                     dialogueParts.add("");
                 } while (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) != -1);
             } else {
+                while (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) == -1) {
+                    presentDelims.add("");
+                    currentPart ++;
+                    dialogueParts.add("");
+                }
+
                 dialogueParts.set(currentPart, dialogueParts.get(currentPart) + ctx.children.get(i).getText());
             }
         }
