@@ -87,6 +87,11 @@ public class StringVector implements Vector<Character> {
   }
 
   @Override
+  public Character randomElement(int index) {
+    return this.randomElement();
+  }
+
+  @Override
   public int size() {
     return this.value.length();
   }

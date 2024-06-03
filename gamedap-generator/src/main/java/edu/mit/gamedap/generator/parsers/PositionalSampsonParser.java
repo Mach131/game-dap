@@ -1,6 +1,7 @@
 package edu.mit.gamedap.generator.parsers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -12,21 +13,27 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import edu.mit.gamedap.generator.Utils;
+import edu.mit.gamedap.generator.datatypes.LinePositionStringElt;
+import edu.mit.gamedap.generator.datatypes.LinePositionStringVector;
 import edu.mit.gamedap.generator.datatypes.StringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
 import edu.mit.gamedap.generator.learners.CompetitiveLearner;
-import edu.mit.gamedap.generator.learners.FSCLStringLearner;
-import edu.mit.gamedap.generator.learners.StringCompetitiveLearner;
+import edu.mit.gamedap.generator.learners.FSCLPositionStringLearner;
+import edu.mit.gamedap.generator.learners.PositionStringCompetitiveLearner;
+
+/// TODO: extract different parts so that they can use the same parsing method and stuff
 
 /**
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
  */
-public class SampsonParser {
+public class PositionalSampsonParser {
   public static final int DEFAULT_NEURON_COUNT = 100;
   public static final double DEFAULT_LEARNING_RATE = 0.2;
   public static final int DEFAULT_TRAINING_EPOCHS = 100;
   public static final double DEFAULT_CLUSTER_STDDEV_THRESH = 0.001;
+
+  public static final double LINE_POSITION_WEIGHTING = 40;
 
   private final int w;
   private final int neuronCount;
@@ -72,7 +79,7 @@ public class SampsonParser {
     }
   }
 
-  public SampsonParser(int w) {
+  public PositionalSampsonParser(int w) {
     assert(w > 0);
     this.w = w;
     this.neuronCount = DEFAULT_NEURON_COUNT;
@@ -81,7 +88,7 @@ public class SampsonParser {
     this.clusterStddevThresh = DEFAULT_CLUSTER_STDDEV_THRESH;
   }
 
-  public SampsonParser(int w, int neuronCount, double learningRate, int trainingEpochs, double clusterStddevThresh) {
+  public PositionalSampsonParser(int w, int neuronCount, double learningRate, int trainingEpochs, double clusterStddevThresh) {
     assert(w > 0);
     this.w = w;
     this.neuronCount = neuronCount;
@@ -103,6 +110,18 @@ public class SampsonParser {
   }
 
   /**
+   * Gets the maximum position of a given set of positional vectors.
+   * 
+   * @param vecs the input vectors
+   * @return The maximum position of the input vectors
+   */
+  double getMaxPosition(List<Vector<LinePositionStringElt>> vecs) {
+    return vecs.stream()
+      .map((vec) -> vec.get(0).getNumberValue())
+      .reduce(0.0, (a, b) -> Math.max(a, b));
+  }
+
+  /**
    * Create substrings of the input, based on the parameter w with which this parser was initialized.
    * Assumes that w is at least 1 and is less than the length of the text.
    * 
@@ -111,16 +130,30 @@ public class SampsonParser {
    * @return A list of size w string vectors, where the ith element contains the substring beginning
    * at the ith character of text.
    */
-  List<Vector<Character>> makeSubstringVectors(String text, Set<Character> characterSet) {
+  List<Vector<LinePositionStringElt>> makeSubstringVectors(String text, Set<Character> characterSet) {
     assert(this.w <= text.length());
 
-    List<Vector<Character>> result = new ArrayList<>();
+    List<Vector<LinePositionStringElt>> result = new ArrayList<>();
+    int linePosition = 0;
     for (int i = 0; i <= text.length() - this.w; i++) {
-      result.add(new StringVector(
-        text.substring(i, i + this.w), characterSet));
+      result.add(new LinePositionStringVector(this._linePositionConverter(linePosition), text.substring(i, i + this.w), characterSet));
+      linePosition += 1;
+      if (text.substring(i, i+1).matches("[\r\n]")) {
+        linePosition = 0;
+      }
     }
 
     return result;
+  }
+
+  /**
+   * A function on line position integers to emphasize substrings closer to the beginning of a line.
+   * 
+   * @param linePosition The position of a substring within a line.
+   * @return A value such that lower linePositions are closer together, and higher linePositions are further apart.
+   */
+  double _linePositionConverter(int linePosition) {
+    return Math.exp((linePosition / LINE_POSITION_WEIGHTING) - 1);
   }
 
   /**
@@ -130,7 +163,7 @@ public class SampsonParser {
    * @return A list of size w string vectors, where the ith element contains the substring beginning
    * at the ith character of text.
    */
-  List<Vector<Character>> makeSubstringVectors(String text) {
+  List<Vector<LinePositionStringElt>> makeSubstringVectors(String text) {
     Set<Character> characterSet = this.buildCharacterSet(text);
     return this.makeSubstringVectors(text, characterSet);
   }
@@ -142,8 +175,9 @@ public class SampsonParser {
    * @param characterSet The set of all characters contained in the substrings
    * @return A list of vector clusters, where each input string's vector is assigned to exactly one cluster
    */
-  List<VectorCluster<Character>> assignVectorClusters(List<Vector<Character>> substrings, Set<Character> characterSet) {
-    CompetitiveLearner<Character> cl = new FSCLStringLearner(learningRate, characterSet);
+  List<VectorCluster<LinePositionStringElt>> assignVectorClusters(List<Vector<LinePositionStringElt>> substrings, Set<Character> characterSet) {
+    double maxPosition = this.getMaxPosition(substrings);
+    CompetitiveLearner<LinePositionStringElt> cl = new FSCLPositionStringLearner(learningRate, maxPosition, characterSet);
     cl.initialize(neuronCount, substrings);
     cl.train(trainingEpochs);
     return cl.cluster();
@@ -158,13 +192,13 @@ public class SampsonParser {
    * @param vectorClusters A list of vector clusters
    * @return A mapping between every vector included in vectorClusters and their calculated popularity
    */
-  Map<Vector<Character>, Double> calculateVectorPopularities(List<VectorCluster<Character>> vectorClusters) {
-    Map<Vector<Character>, Double> result = new HashMap<>();
-    for (VectorCluster<Character> cluster : vectorClusters) {
+  Map<Vector<LinePositionStringElt>, Double> calculateVectorPopularities(List<VectorCluster<LinePositionStringElt>> vectorClusters) {
+    Map<Vector<LinePositionStringElt>, Double> result = new HashMap<>();
+    for (VectorCluster<LinePositionStringElt> cluster : vectorClusters) {
       if (cluster.getDistanceStdDev() < clusterStddevThresh) {
         result.putAll(calculateSingleClusterPopularities(cluster));
       } else {
-        for (Vector<Character> vector : cluster.getVectors()) {
+        for (Vector<LinePositionStringElt> vector : cluster.getVectors()) {
           result.put(vector, 0.0);
         }
       }
@@ -177,7 +211,7 @@ public class SampsonParser {
    * 
    * @see SampsonParser#calculateVectorPopularities(List)
    */
-  private Map<Vector<Character>, Double> calculateSingleClusterPopularities(VectorCluster<Character> vectorCluster) {
+  private Map<Vector<LinePositionStringElt>, Double> calculateSingleClusterPopularities(VectorCluster<LinePositionStringElt> vectorCluster) {
     double size = vectorCluster.getVectors().size();
     return vectorCluster.getVectors().stream()
       .collect(Collectors.toMap(Function.identity(), x -> size));
@@ -193,16 +227,16 @@ public class SampsonParser {
    * 
    * @return A list of the identified delimiter candidates, in the order they appear
    */
-  private List<String> findDelimiters(String text, List<Vector<Character>> substringVectors,
-      Map<Vector<Character>, Double> popularities, double popularityThreshold) {
+  private List<String> findDelimiters(String text, List<Vector<LinePositionStringElt>> substringVectors,
+      Map<Vector<LinePositionStringElt>, Double> popularities, double popularityThreshold) {
     List<Integer> delimiterStarts = new ArrayList<>();
     List<Integer> delimiterEnds = new ArrayList<>();
     int lastDelimiterEnd = -1;
     int delimitersFound = 0;
 
     // Identify regions of text with delimiters
-    for (int i = 0; i < substringVectors.size(); i++) {
-      Vector<Character> vector = substringVectors.get(i);
+    for (int i = 1; i < substringVectors.size(); i++) {
+      Vector<LinePositionStringElt> vector = substringVectors.get(i);
       if (popularities.get(vector) >= popularityThreshold) {
         // Check if this can be merged with the previous delimiter
         if (i <= lastDelimiterEnd) {
@@ -274,17 +308,29 @@ public class SampsonParser {
    */
   public ParseResults parse(String text) {
     Set<Character> characterSet = buildCharacterSet(text);
-    List<Vector<Character>> substrings = makeSubstringVectors(text, characterSet);
-    List<VectorCluster<Character>> clusters = assignVectorClusters(substrings, characterSet);
+    List<Vector<LinePositionStringElt>> substrings = makeSubstringVectors(text, characterSet);
+    List<VectorCluster<LinePositionStringElt>> clusters = assignVectorClusters(substrings, characterSet);
 
     // TODO: break into helper methods
 
     // Build popularity histogram
-    for (VectorCluster<Character> cluster : clusters) {
+    for (VectorCluster<LinePositionStringElt> cluster : clusters) {
       System.out.println(cluster.info());
     }
     System.out.println("---");
-    Map<Vector<Character>, Double> popularities = calculateVectorPopularities(clusters);
+    Map<Vector<LinePositionStringElt>, Double> popularities = calculateVectorPopularities(clusters);
+    Double maxPopularity = 0.0;
+    List<Vector<LinePositionStringElt>> maxVectors = new ArrayList<>();
+    for (Vector<LinePositionStringElt> vec : popularities.keySet()) {
+      double pop = popularities.get(vec);
+      if (pop > maxPopularity) {
+        maxVectors.clear();
+        maxPopularity = pop;
+      } if (pop == maxPopularity) {
+        maxVectors.add(vec);
+      }
+    }
+    System.out.println(maxVectors);
     
     System.out.println(Utils.makeHistogram(popularities.values().stream().filter(x -> x>0).toList()));
     double globalMode = Utils.calculateMode(popularities.values().stream().filter(x -> x>0).toList());

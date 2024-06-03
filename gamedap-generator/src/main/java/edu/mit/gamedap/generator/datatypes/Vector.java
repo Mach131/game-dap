@@ -21,6 +21,14 @@ public interface Vector<T> {
   public T randomElement();
 
   /**
+   * Provides an index-dependent random element of the vector type.
+   * 
+   * @param index the index to get a random element for
+   * @return a random value of the type T
+   */
+  public T randomElement(int index);
+
+  /**
    * Returns the current size of the vector.
    * 
    * @return the number of elements the vector contains.

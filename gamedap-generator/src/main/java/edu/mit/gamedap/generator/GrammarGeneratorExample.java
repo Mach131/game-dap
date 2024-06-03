@@ -10,8 +10,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import edu.mit.gamedap.generator.parsers.SampsonParser;
-import edu.mit.gamedap.generator.parsers.SampsonParser.ParseResults;
+import edu.mit.gamedap.generator.parsers.PositionalSampsonParser;
+import edu.mit.gamedap.generator.parsers.PositionalSampsonParser.ParseResults;
 
 /**
  * Hello world!
@@ -36,11 +36,12 @@ public class GrammarGeneratorExample
         "grammar GeneratedGrammar;\n" +
         "section\n" +
         "    : (title)? (pair)+ EOF ;\n" +
-        "title: (NOT_TOKEN0 | NEW_LINE)+ ;\n" +
+        "title: (TEXT | NEW_LINE)+ ;\n" +
         "pair: ";
     private static final String BASIC_FORMAT_LEXER =
         "// default lexer\n" +
-        "NEW_LINE : [\\n\\r\\f]+ ;";
+        "NEW_LINE : [\\n\\r\\f]+ ;\n" +
+        "TEXT : ~[\\n\\r\\f] ;";
 
     public static void main( String[] args ) {
         ClassLoader classLoader = new GrammarGeneratorExample().getClass().getClassLoader();
@@ -49,8 +50,8 @@ public class GrammarGeneratorExample
             String inputText = IOUtils.toString(is, "UTF-8");
             System.out.println(inputText);
             System.out.println("---");
-            SampsonParser sp = new SampsonParser(3, 300, SampsonParser.DEFAULT_LEARNING_RATE,
-                250, SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
+            PositionalSampsonParser sp = new PositionalSampsonParser(3, 300, PositionalSampsonParser.DEFAULT_LEARNING_RATE,
+                250, PositionalSampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
             ParseResults results = sp.parse(inputText);
             System.out.println(results.getRecordFormat());
             for (List<String> fieldSet : results.getRecordFields()) {
@@ -67,12 +68,12 @@ public class GrammarGeneratorExample
             for (int i = 0; i < recordDelimiters.size(); i ++) {
                 
                 generatedLexer += String.format("TOKEN%s : '%s' ;\n", i, recordDelimiters.get(i));
-                generatedLexer += String.format("NOT_TOKEN%s : %s ;\n", i, makeNegationToken(recordDelimiters.get(i)));
+                // generatedLexer += String.format("NOT_TOKEN%s : %s ;\n", i, makeNegationToken(recordDelimiters.get(i)));
 
                 int nextIdx = (i+1) % recordDelimiters.size();
                 String chainSymbol = nextIdx == 0 ? "+" : "*";
-                generatedParser += String.format("TOKEN%s? (NOT_TOKEN%s | NEW_LINE)%s ",
-                    i, nextIdx, chainSymbol);
+                generatedParser += String.format("TOKEN%s? (TEXT | NEW_LINE)%s ",
+                    i, chainSymbol);
             }
             String temp_generated_grammar = BASIC_FORMAT_START + generatedParser + ";\n" +
                 generatedLexer + BASIC_FORMAT_LEXER;
@@ -101,23 +102,23 @@ public class GrammarGeneratorExample
         }
     }
 
-    /**
-     * Generates a parser rule to match anything that is not a given token
-     * @param token The token to negate
-     * @return The rule to match text that is not the token (not including a name for the rule)
-     */
-    private static String makeNegationToken(String token) {
-        String result = "";
-        for (int i = 0; i < token.length(); i ++) {
-            if (i != 0) {
-                // Add prefix of previous characters
-                result += String.format(" | '%s' ", token.substring(0, i));
-            }
+    // /**
+    //  * Generates a parser rule to match anything that is not a given token
+    //  * @param token The token to negate
+    //  * @return The rule to match text that is not the token (not including a name for the rule)
+    //  */
+    // private static String makeNegationToken(String token) {
+    //     String result = "";
+    //     for (int i = 0; i < token.length(); i ++) {
+    //         if (i != 0) {
+    //             // Add prefix of previous characters
+    //             result += String.format(" | '%s' ", token.substring(0, i));
+    //         }
 
-            // Add negation of current characters
-            result += String.format("~'%s'", token.charAt(i));
-        }
+    //         // Add negation of current characters
+    //         result += String.format("~'%s'", token.charAt(i));
+    //     }
 
-        return result;
-    }
+    //     return result;
+    // }
 }
