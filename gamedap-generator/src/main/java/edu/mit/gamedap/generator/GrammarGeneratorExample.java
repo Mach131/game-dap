@@ -10,8 +10,10 @@ import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import edu.mit.gamedap.generator.parsers.PositionalSampsonParser;
-import edu.mit.gamedap.generator.parsers.PositionalSampsonParser.ParseResults;
+import edu.mit.gamedap.generator.datatypes.LinePositionStringElt;
+import edu.mit.gamedap.generator.parsers.PositionalLearningPrimer;
+import edu.mit.gamedap.generator.parsers.SampsonParser;
+import edu.mit.gamedap.generator.parsers.SampsonParser.ParseResults;
 
 /**
  * Hello world!
@@ -50,9 +52,9 @@ public class GrammarGeneratorExample
             String inputText = IOUtils.toString(is, "UTF-8");
             System.out.println(inputText);
             System.out.println("---");
-            PositionalSampsonParser sp = new PositionalSampsonParser(3, 300, PositionalSampsonParser.DEFAULT_LEARNING_RATE,
-                250, PositionalSampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
-            ParseResults results = sp.parse(inputText);
+            SampsonParser<LinePositionStringElt> sp = new SampsonParser<>(3, SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
+            SampsonParser<LinePositionStringElt>.ParseResults results = sp.parse(inputText,
+                new PositionalLearningPrimer(300, SampsonParser.DEFAULT_LEARNING_RATE, 250));
             System.out.println(results.getRecordFormat());
             for (List<String> fieldSet : results.getRecordFields()) {
                 System.out.println(fieldSet);

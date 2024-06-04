@@ -22,16 +22,13 @@ import edu.mit.gamedap.generator.learners.StringCompetitiveLearner;
 /**
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
  */
-public class SampsonParser {
+public class SampsonParser<T> {
   public static final int DEFAULT_NEURON_COUNT = 100;
   public static final double DEFAULT_LEARNING_RATE = 0.2;
   public static final int DEFAULT_TRAINING_EPOCHS = 100;
   public static final double DEFAULT_CLUSTER_STDDEV_THRESH = 0.001;
 
   private final int w;
-  private final int neuronCount;
-  private final double learningRate;
-  private final int trainingEpochs;
   private final double clusterStddevThresh;
 
   /**
@@ -75,18 +72,12 @@ public class SampsonParser {
   public SampsonParser(int w) {
     assert(w > 0);
     this.w = w;
-    this.neuronCount = DEFAULT_NEURON_COUNT;
-    this.learningRate = DEFAULT_LEARNING_RATE;
-    this.trainingEpochs = DEFAULT_TRAINING_EPOCHS;
     this.clusterStddevThresh = DEFAULT_CLUSTER_STDDEV_THRESH;
   }
 
-  public SampsonParser(int w, int neuronCount, double learningRate, int trainingEpochs, double clusterStddevThresh) {
+  public SampsonParser(int w, double clusterStddevThresh) {
     assert(w > 0);
     this.w = w;
-    this.neuronCount = neuronCount;
-    this.learningRate = learningRate;
-    this.trainingEpochs = trainingEpochs;
     this.clusterStddevThresh = clusterStddevThresh;
   }
 
@@ -102,52 +93,17 @@ public class SampsonParser {
       .collect(Collectors.toSet());
   }
 
-  /**
-   * Create substrings of the input, based on the parameter w with which this parser was initialized.
-   * Assumes that w is at least 1 and is less than the length of the text.
-   * 
-   * @param text The input text
-   * @param characterSet The set of all characters contained in the text
-   * @return A list of size w string vectors, where the ith element contains the substring beginning
-   * at the ith character of text.
-   */
-  List<Vector<Character>> makeSubstringVectors(String text, Set<Character> characterSet) {
-    assert(this.w <= text.length());
-
-    List<Vector<Character>> result = new ArrayList<>();
-    for (int i = 0; i <= text.length() - this.w; i++) {
-      result.add(new StringVector(
-        text.substring(i, i + this.w), characterSet));
-    }
-
-    return result;
-  }
-
-  /**
-   * @see SampsonParser#makeSubstringVectors(String, Set)
-   * 
-   * @param text The input text
-   * @return A list of size w string vectors, where the ith element contains the substring beginning
-   * at the ith character of text.
-   */
-  List<Vector<Character>> makeSubstringVectors(String text) {
-    Set<Character> characterSet = this.buildCharacterSet(text);
-    return this.makeSubstringVectors(text, characterSet);
-  }
-
-  /**
-   * Assigns substrings to clusters based on the Competitive Learning + Vector Quantization algorithm.
-   * 
-   * @param inputVectors A list of string vectors, where each vector is expected to be of length w
-   * @param characterSet The set of all characters contained in the substrings
-   * @return A list of vector clusters, where each input string's vector is assigned to exactly one cluster
-   */
-  List<VectorCluster<Character>> assignVectorClusters(List<Vector<Character>> substrings, Set<Character> characterSet) {
-    CompetitiveLearner<Character> cl = new FSCLStringLearner(learningRate, characterSet);
-    cl.initialize(neuronCount, substrings);
-    cl.train(trainingEpochs);
-    return cl.cluster();
-  }
+  // /**
+  //  * @see SampsonParser#makeSubstringVectors(String, Set)
+  //  * 
+  //  * @param text The input text
+  //  * @return A list of size w string vectors, where the ith element contains the substring beginning
+  //  * at the ith character of text.
+  //  */
+  // List<Vector<Character>> makeSubstringVectors(String text) {
+  //   Set<Character> characterSet = this.buildCharacterSet(text);
+  //   return this.makeSubstringVectors(text, characterSet);
+  // }
 
   /**
    * Calculates the popularity of all vectors within a set of vector clusters. This is originally set
@@ -158,13 +114,13 @@ public class SampsonParser {
    * @param vectorClusters A list of vector clusters
    * @return A mapping between every vector included in vectorClusters and their calculated popularity
    */
-  Map<Vector<Character>, Double> calculateVectorPopularities(List<VectorCluster<Character>> vectorClusters) {
-    Map<Vector<Character>, Double> result = new HashMap<>();
-    for (VectorCluster<Character> cluster : vectorClusters) {
+  Map<Vector<T>, Double> calculateVectorPopularities(List<VectorCluster<T>> vectorClusters) {
+    Map<Vector<T>, Double> result = new HashMap<>();
+    for (VectorCluster<T> cluster : vectorClusters) {
       if (cluster.getDistanceStdDev() < clusterStddevThresh) {
         result.putAll(calculateSingleClusterPopularities(cluster));
       } else {
-        for (Vector<Character> vector : cluster.getVectors()) {
+        for (Vector<T> vector : cluster.getVectors()) {
           result.put(vector, 0.0);
         }
       }
@@ -177,7 +133,7 @@ public class SampsonParser {
    * 
    * @see SampsonParser#calculateVectorPopularities(List)
    */
-  private Map<Vector<Character>, Double> calculateSingleClusterPopularities(VectorCluster<Character> vectorCluster) {
+  private Map<Vector<T>, Double> calculateSingleClusterPopularities(VectorCluster<T> vectorCluster) {
     double size = vectorCluster.getVectors().size();
     return vectorCluster.getVectors().stream()
       .collect(Collectors.toMap(Function.identity(), x -> size));
@@ -193,8 +149,8 @@ public class SampsonParser {
    * 
    * @return A list of the identified delimiter candidates, in the order they appear
    */
-  private List<String> findDelimiters(String text, List<Vector<Character>> substringVectors,
-      Map<Vector<Character>, Double> popularities, double popularityThreshold) {
+  private List<String> findDelimiters(String text, List<Vector<T>> substringVectors,
+      Map<Vector<T>, Double> popularities, double popularityThreshold) {
     List<Integer> delimiterStarts = new ArrayList<>();
     List<Integer> delimiterEnds = new ArrayList<>();
     int lastDelimiterEnd = -1;
@@ -202,7 +158,7 @@ public class SampsonParser {
 
     // Identify regions of text with delimiters
     for (int i = 0; i < substringVectors.size(); i++) {
-      Vector<Character> vector = substringVectors.get(i);
+      Vector<T> vector = substringVectors.get(i);
       if (popularities.get(vector) >= popularityThreshold) {
         // Check if this can be merged with the previous delimiter
         if (i <= lastDelimiterEnd) {
@@ -272,19 +228,19 @@ public class SampsonParser {
    * @return The results of parsing through Competitive Learning and Vector Quantization
    * @see ParseResults
    */
-  public ParseResults parse(String text) {
+  public ParseResults parse(String text, ParseLearningPrimer<T> primer) {
     Set<Character> characterSet = buildCharacterSet(text);
-    List<Vector<Character>> substrings = makeSubstringVectors(text, characterSet);
-    List<VectorCluster<Character>> clusters = assignVectorClusters(substrings, characterSet);
+    List<Vector<T>> substrings = primer.makeSubstringVectors(text, this.w, characterSet);
+    List<VectorCluster<T>> clusters = primer.assignVectorClusters(substrings, characterSet);
 
     // TODO: break into helper methods
 
     // Build popularity histogram
-    for (VectorCluster<Character> cluster : clusters) {
+    for (VectorCluster<T> cluster : clusters) {
       System.out.println(cluster.info());
     }
     System.out.println("---");
-    Map<Vector<Character>, Double> popularities = calculateVectorPopularities(clusters);
+    Map<Vector<T>, Double> popularities = calculateVectorPopularities(clusters);
     
     System.out.println(Utils.makeHistogram(popularities.values().stream().filter(x -> x>0).toList()));
     double globalMode = Utils.calculateMode(popularities.values().stream().filter(x -> x>0).toList());

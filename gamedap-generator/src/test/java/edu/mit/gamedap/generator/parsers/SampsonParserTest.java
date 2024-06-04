@@ -29,7 +29,7 @@ public class SampsonParserTest {
   @Test
   public void buildCharacterSet_Empty()
   {
-    SampsonParser parser = new SampsonParser(1);
+    SampsonParser<Character> parser = new SampsonParser<>(1);
     Set<Character> result = parser.buildCharacterSet("");
     assertEquals("Expected empty result", 0, result.size());
   }
@@ -38,7 +38,7 @@ public class SampsonParserTest {
   public void buildCharacterSet_Singleton()
   {
     String input = "X";
-    SampsonParser parser = new SampsonParser(1);
+    SampsonParser<Character> parser = new SampsonParser<>(1);
     Set<Character> result = parser.buildCharacterSet(input);
     validateCharacterSet(input, result);
   }
@@ -47,7 +47,7 @@ public class SampsonParserTest {
   public void buildCharacterSet_Unique()
   {
     String input = "World";
-    SampsonParser parser = new SampsonParser(1);
+    SampsonParser<Character> parser = new SampsonParser<>(1);
     Set<Character> result = parser.buildCharacterSet(input);
     validateCharacterSet(input, result);
   }
@@ -56,7 +56,7 @@ public class SampsonParserTest {
   public void buildCharacterSet_Repeats()
   {
     String input = "Hello World";
-    SampsonParser parser = new SampsonParser(1);
+    SampsonParser<Character> parser = new SampsonParser<>(1);
     Set<Character> result = parser.buildCharacterSet(input);
     validateCharacterSet(input, result);
   }
@@ -65,7 +65,7 @@ public class SampsonParserTest {
   public void buildCharacterSet_Longer()
   {
     String input = "This sentence has\nmany characters...";
-    SampsonParser parser = new SampsonParser(1);
+    SampsonParser<Character> parser = new SampsonParser<>(1);
     Set<Character> result = parser.buildCharacterSet(input);
     validateCharacterSet(input, result);
   }
@@ -82,8 +82,10 @@ public class SampsonParserTest {
   @Test
   public void makeSubstringVectors_SizeOne()
   {
-    SampsonParser parser = new SampsonParser(1);
-    List<Vector<Character>> result = parser.makeSubstringVectors("input");
+    SampsonParser<Character> parser = new SampsonParser<>(1);
+    ParseLearningPrimer<Character> primer = new StringParseLearningPrimer();
+    String input = "input";
+    List<Vector<Character>> result = primer.makeSubstringVectors(input, 1, parser.buildCharacterSet(input));
     List<Vector<Character>> expected = makeSVList(Arrays.asList("i", "n", "p", "u", "t"));
     assertEquals("Unexpected makeSubstringVectors result", expected, result);
   }
@@ -91,8 +93,10 @@ public class SampsonParserTest {
   @Test
   public void makeSubstringVectors_SizeLonger()
   {
-    SampsonParser parser = new SampsonParser(3);
-    List<Vector<Character>> result = parser.makeSubstringVectors("input");
+    SampsonParser<Character> parser = new SampsonParser<>(3);
+    ParseLearningPrimer<Character> primer = new StringParseLearningPrimer();
+    String input = "input";
+    List<Vector<Character>> result = primer.makeSubstringVectors(input, 3, parser.buildCharacterSet(input));
     List<Vector<Character>> expected = makeSVList(Arrays.asList("inp", "npu", "put"));
     assertEquals("Unexpected makeSubstringVectors result", expected, result);
   }
@@ -100,8 +104,10 @@ public class SampsonParserTest {
   @Test
   public void makeSubstringVectors_SizeFull()
   {
-    SampsonParser parser = new SampsonParser(5);
-    List<Vector<Character>> result = parser.makeSubstringVectors("input");
+    SampsonParser<Character> parser = new SampsonParser<>(5);
+    ParseLearningPrimer<Character> primer = new StringParseLearningPrimer();
+    String input = "input";
+    List<Vector<Character>> result = primer.makeSubstringVectors(input, 5, parser.buildCharacterSet(input));
     List<Vector<Character>> expected = makeSVList(Arrays.asList("input"));
     assertEquals("Unexpected makeSubstringVectors result", expected, result);
   }
@@ -109,8 +115,10 @@ public class SampsonParserTest {
   @Test
   public void makeSubstringVectors_LongerInput()
   {
-    SampsonParser parser = new SampsonParser(4);
-    List<Vector<Character>> result = parser.makeSubstringVectors("Hello World");
+    SampsonParser<Character> parser = new SampsonParser<>(4);
+    ParseLearningPrimer<Character> primer = new StringParseLearningPrimer();
+    String input = "Hello World";
+    List<Vector<Character>> result = primer.makeSubstringVectors(input, 4, parser.buildCharacterSet(input));
     List<Vector<Character>> expected = makeSVList(Arrays.asList(
       "Hell", "ello", "llo ", "lo W", "o Wo", " Wor", "Worl", "orld"));
     assertEquals("Unexpected makeSubstringVectors result", expected, result);
