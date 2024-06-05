@@ -3,26 +3,21 @@ package edu.mit.gamedap.generator.learners;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
+import edu.mit.gamedap.generator.datatypes.VectorContext;
 
 /**
  * Represents an environment for the competitive learning algorithm implemented in 
  * https://github.com/sampsyo/ap/blob/master/code/cl/__init__.py. Essentially, aims to
  * train a set of initially random data to align with the data provided as input.
  */
-public abstract class CompetitiveLearner<T> {
+public abstract class CompetitiveLearner<C extends VectorContext, T> {
 
-  private final List<Vector<T>> stimuli;
-  private final List<Vector<T>> neurons;
+  private final List<Vector<C, T>> stimuli;
+  private final List<Vector<C, T>> neurons;
   private final double learningRate;
 
   public CompetitiveLearner(double learningRate) {
@@ -38,7 +33,7 @@ public abstract class CompetitiveLearner<T> {
    * @param stimuli The stimuli to train on, assumed to be a non-empty list with vectors
    * of a constant size.
    */
-  public void initialize(int neuronCount, List<Vector<T>> stimuli) {
+  public void initialize(int neuronCount, List<Vector<C, T>> stimuli) {
     this.neurons.clear();
     this.stimuli.clear();
 
@@ -55,7 +50,7 @@ public abstract class CompetitiveLearner<T> {
    * @param size the size of the vectors to generate
    * @return A random vector of the learning data type
    */
-  abstract Vector<T> generateNeuron(int size);
+  abstract Vector<C, T> generateNeuron(int size);
 
   /**
    * Gets the activation of a neuron with respect to a stimulus. In a step of competitive learning,
@@ -65,7 +60,7 @@ public abstract class CompetitiveLearner<T> {
    * @param stimulus Stimulus to check
    * @return The activation of the neuron with respect to the stimulus
    */
-  abstract double getNeuronActivation(Vector<T> neuron, Vector<T> stimulus);
+  abstract double getNeuronActivation(Vector<C, T> neuron, Vector<C, T> stimulus);
 
   /**
    * Performs one step of training for a given stimulus. Will often use 
@@ -75,7 +70,7 @@ public abstract class CompetitiveLearner<T> {
    * @param stimulus The stimulus to use for training
    * @param learningRate The size of the learning adjustment to be made
    */
-  abstract void trainSingleStimulus(Vector<T> stimulus, double learningRate);
+  abstract void trainSingleStimulus(Vector<C, T> stimulus, double learningRate);
 
   /**
    * Returns the neurons selected to be trained by a given stimulus. Based on the activations returned
@@ -85,7 +80,7 @@ public abstract class CompetitiveLearner<T> {
    * @param neuronCount The number of neurons to train
    * @return A list of neuronCount neurons with minimal activations with respect to stimulus.
    */
-  List<Vector<T>> getWinningNeurons(Vector<T> stimulus, int neuronCount) {
+  List<Vector<C, T>> getWinningNeurons(Vector<C, T> stimulus, int neuronCount) {
     return this.neurons.stream()
       .sorted(Comparator.comparingDouble(n -> this.getNeuronActivation(n, stimulus)))
       .limit(neuronCount)
@@ -97,7 +92,7 @@ public abstract class CompetitiveLearner<T> {
    * 
    * @see CompetitiveLearner#getWinningNeurons(Vector, int)
    */
-  Vector<T> getWinningNeuron(Vector<T> stimulus) {
+  Vector<C, T> getWinningNeuron(Vector<C, T> stimulus) {
     return getWinningNeurons(stimulus, 1).get(0);
   }
 
@@ -110,7 +105,7 @@ public abstract class CompetitiveLearner<T> {
    */
   public void train(int epochs) {
     for (int epoch = 0; epoch < epochs; epoch++) {
-      for (Vector<T> stimulus : this.stimuli) {
+      for (Vector<C, T> stimulus : this.stimuli) {
         this.trainSingleStimulus(stimulus, this.learningRate);
       }
     }
@@ -124,7 +119,7 @@ public abstract class CompetitiveLearner<T> {
    * @param stimulus The stimulus to quantize
    * @return The index of the nearest neuron
    */
-  public int quantize(Vector<T> stimulus) {
+  public int quantize(Vector<C, T> stimulus) {
     int idx = 0;
     double minDist = this.neurons.get(0).distance(stimulus);
 
@@ -149,14 +144,14 @@ public abstract class CompetitiveLearner<T> {
    * @return A list of clusters with neurons as the centers and stimuli as the clustered vectors, 
    * where every stimulus is in exactly one cluster.
    */
-  public List<VectorCluster<T>> cluster() {
+  public List<VectorCluster<C, T>> cluster() {
     // Quantize all stimuli
     List<Integer> quantizedIndices = this.stimuli.stream()
       .map(s -> this.quantize(s))
       .toList();
 
     // Organize each stimulus under the corresponding neuron index
-    Map<Integer, List<Vector<T>>> quantizationMap = new HashMap<>();
+    Map<Integer, List<Vector<C, T>>> quantizationMap = new HashMap<>();
     for (int i = 0; i < quantizedIndices.size(); i++) {
       int neuronIndex = quantizedIndices.get(i);
       if (!quantizationMap.containsKey(neuronIndex)) {

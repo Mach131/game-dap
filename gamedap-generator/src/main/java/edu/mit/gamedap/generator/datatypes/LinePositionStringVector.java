@@ -1,15 +1,11 @@
 package edu.mit.gamedap.generator.datatypes;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.sound.sampled.Line;
 
 /**
  * A vector implementation for short strings, accounting for how far into a line they appear in the original text.
@@ -17,11 +13,9 @@ import javax.sound.sampled.Line;
  * weighted by the positional element. Random elements are based on either the characters in the set string or a provided
  * character set.
  */
-public class LinePositionStringVector implements Vector<LinePositionStringElt> {
+public class LinePositionStringVector implements Vector<LinePositionContext, Character> {
 
-  private final static float POSITION_RANDOM_VARIATION = 3;
-
-  private double position;
+  private LinePositionContext positionContext;
   private String value;
   private final Set<Character> characterSet;
   private List<Character> characterList;
@@ -30,10 +24,11 @@ public class LinePositionStringVector implements Vector<LinePositionStringElt> {
    * Initializes a new vector with a given position and value. The vector size will be fixed according
    * to this initial value, and the character set will be initialized as the characters it uses.
    * 
+   * @param positionContext Context indicating the vector's line position
    * @param value The initial string value for the vector
    */
-  public LinePositionStringVector(double position, String value) {
-    this.position = position;
+  public LinePositionStringVector(LinePositionContext positionContext, String value) {
+    this.positionContext = positionContext;
     this.value = value;
     this.characterSet = new HashSet<>();
     this.addValueCharactersToSet();
@@ -44,29 +39,30 @@ public class LinePositionStringVector implements Vector<LinePositionStringElt> {
    * fixed according to this initial value, and the character set will be extended with the characters
    * the value contains.
    * 
+   * @param positionContext Context indicating the vector's line position
    * @param value The initial string value for the vector
    * @param characterSet The set of characters to use for randomization
    */
-  public LinePositionStringVector(double position, String value, Set<Character> characterSet) {
-    this.position = position;
+  public LinePositionStringVector(LinePositionContext positionContext, String value, Set<Character> characterSet) {
+    this.positionContext = positionContext;
     this.value = value;
     this.characterSet = new HashSet<>(characterSet);
     this.addValueCharactersToSet();
   }
 
   /**
-   * Initializes a new vector with a given max position, size and character set. The contents of the vector
+   * Initializes a new vector with a given max position, size and character set. The contents and context of the vector
    * will be randomized based on the provided characters.
    * 
-   * @param size The total size of the vector (including the position as one element)
+   * @param maxPosition The maximum position to be used by the context for randomization
+   * @param size The total size of the vector (excluding the context)
    * @param characterSet The set of characters to use for randomization
    */
-  public LinePositionStringVector(double maxPosition, int size, Set<Character> characterSet) {
-    Random random = new Random();
-    this.position = random.nextDouble(maxPosition);
+  public LinePositionStringVector(long maxPosition, int size, Set<Character> characterSet) {
+    this.positionContext = LinePositionContext.makeRandom(maxPosition);
     this.characterSet = new HashSet<>(characterSet);
     this.characterList = new ArrayList<>(characterSet);
-    this.value = this.makeRandomString(size - 1);
+    this.value = this.makeRandomString(size);
   }
 
   private void addValueCharactersToSet() {
@@ -78,91 +74,68 @@ public class LinePositionStringVector implements Vector<LinePositionStringElt> {
   }
 
   @Override
+  public LinePositionContext getContext() {
+    return this.positionContext;
+  }
+
+  @Override
   public void randomize() {
-    this.position = this.randomElement(0).getNumberValue();
-    this.value = this.makeRandomString(this.size() - 1);
+    this.positionContext.randomize();
+    this.value = this.makeRandomString(this.size());
   }
 
   private String makeRandomString(int size) {
     char[] newCharacters = new char[size];
     for (int i = 0; i < size; i ++) {
-      newCharacters[i] = this.randomElement(i+1).getCharacterValue();
+      newCharacters[i] = this.randomElement();
     }
     return new String(newCharacters);
   }
 
   @Override
-  public LinePositionStringElt randomElement() {
+  public Character randomElement() {
     Random random = new Random();
-    return new LinePositionStringElt(this.characterList.get(random.nextInt(this.characterList.size())));
-  }
-
-  @Override
-  public LinePositionStringElt randomElement(int i) {
-    Random random = new Random();
-    if (i > 0) {
-      return new LinePositionStringElt(this.characterList.get(random.nextInt(this.characterList.size())));
-    } else {
-      double newPosition = random.nextDouble(
-        Math.max(this.position - LinePositionStringVector.POSITION_RANDOM_VARIATION, 0),
-        this.position + LinePositionStringVector.POSITION_RANDOM_VARIATION+1);
-      return new LinePositionStringElt(newPosition);
-    }
+    return this.characterList.get(random.nextInt(this.characterList.size()));
   }
 
   @Override
   public int size() {
-    return this.value.length() + 1;
+    return this.value.length();
   }
 
   @Override
-  public LinePositionStringElt get(int i) {
-    if (i == 0) {
-      return new LinePositionStringElt(this.position);
-    } else {
-      return new LinePositionStringElt(this.value.charAt(i-1));
-    }
+  public Character get(int i) {
+    return this.value.charAt(i);
   }
 
   @Override
-  public LinePositionStringElt set(int i, LinePositionStringElt v) {
-    if (i == 0) {
-      double oldPosition = this.position;
-      this.position = v.getNumberValue();
-      return new LinePositionStringElt(oldPosition);
-    } else {
-      char[] valueChars = this.value.toCharArray();
-      char oldChar = valueChars[i-1];
-      valueChars[i-1] = v.getCharacterValue();
-      this.value = new String(valueChars);
-      return new LinePositionStringElt(oldChar);
-    }
+  public Character set(int i, Character v) {
+    char[] valueChars = this.value.toCharArray();
+    char oldChar = valueChars[i];
+    valueChars[i] = v;
+    this.value = new String(valueChars);
+    return oldChar;
   }
 
   @Override
-  public double distance(Vector<LinePositionStringElt> other) {
+  public double distance(Vector<LinePositionContext, Character> other) {
     assert(this.size() == other.size());
 
     double distance = 0;
     for (int i = 0; i < this.size(); i ++) {
-      LinePositionStringElt a = this.get(i);
-      LinePositionStringElt b = other.get(i);
-      if (!a.equals(b)) {
-        if (a.isCharacter && b.isCharacter) {
-          distance += 1;
-        } else if (!a.isCharacter && !b.isCharacter) {
-          distance += Math.abs(b.getNumberValue() - a.getNumberValue());
-        } else {
-          distance += 9999999;
-        }
+      if (!this.get(i).equals(other.get(i))) {
+        distance += 1;
       }
     }
+
+    distance += this.getContext().contextDistance(other.getContext());
+
     return distance;
   }
 
   @Override
   public String toString() {
-    return String.format("<LinePositionStringVector: position %s, '%s'>", this.position, this.value);
+    return String.format("<LinePositionStringVector: %s, '%s'>", this.positionContext, this.value);
   }
 
   @Override
@@ -171,6 +144,6 @@ public class LinePositionStringVector implements Vector<LinePositionStringElt> {
       return false;
     }
     LinePositionStringVector ov = (LinePositionStringVector) obj;
-    return ov.position == this.position && ov.value.equals(this.value);
+    return ov.positionContext.equals(this.positionContext) && ov.value.equals(this.value);
   }
 }

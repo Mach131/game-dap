@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-import edu.mit.gamedap.generator.datatypes.LinePositionStringElt;
+import edu.mit.gamedap.generator.datatypes.LinePositionContext;
 import edu.mit.gamedap.generator.datatypes.LinePositionStringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 
@@ -15,10 +15,10 @@ import edu.mit.gamedap.generator.datatypes.Vector;
  * 
  * @see CompetitiveLearner
  */
-public class PositionStringCompetitiveLearner extends CompetitiveLearner<LinePositionStringElt> {
+public class PositionStringCompetitiveLearner extends CompetitiveLearner<LinePositionContext, Character> {
 
   private final Set<Character> characterSet;
-  private double maxPosition;
+  private long maxPosition;
 
   /**
    * Initializes the learner with a set of characters to use for neuron generation.
@@ -27,19 +27,19 @@ public class PositionStringCompetitiveLearner extends CompetitiveLearner<LinePos
    * @param maxPosition The maximum line position of any vector for neuron generation
    * @param characterSet The set of characters to use for neuron generation
    */
-  public PositionStringCompetitiveLearner(double learningRate, double maxPosition, Set<Character> characterSet) {
+  public PositionStringCompetitiveLearner(double learningRate, long maxPosition, Set<Character> characterSet) {
     super(learningRate);
     this.maxPosition = maxPosition;
     this.characterSet = characterSet;
   }
 
   @Override
-  Vector<LinePositionStringElt> generateNeuron(int size) {
+  Vector<LinePositionContext, Character> generateNeuron(int size) {
     return new LinePositionStringVector(this.maxPosition, size, this.characterSet);
   }
 
   @Override
-  double getNeuronActivation(Vector<LinePositionStringElt> neuron, Vector<LinePositionStringElt> stimulus) {
+  double getNeuronActivation(Vector<LinePositionContext, Character> neuron, Vector<LinePositionContext, Character> stimulus) {
     return neuron.distance(stimulus);
   }
 
@@ -53,7 +53,7 @@ public class PositionStringCompetitiveLearner extends CompetitiveLearner<LinePos
    * @param learningAmount The proportion of indices to be changed; elements in the neuron will become equal
    * to those in the stimulus if this is positive, and vice-versa if this is negative.
    */
-  void trainSelectedNeuron(Vector<LinePositionStringElt> stimulus, Vector<LinePositionStringElt> neuron, double learningAmount) {
+  void trainSelectedNeuron(Vector<LinePositionContext, Character> stimulus, Vector<LinePositionContext, Character> neuron, double learningAmount) {
     // Find the differing indices if learningAmount is positive, or the matching ones if negative
     List<Integer> targetIndices = new ArrayList<>(IntStream.range(0, stimulus.size())
       .filter(i -> (stimulus.get(i) == neuron.get(i)) != (learningAmount >= 0))
@@ -72,15 +72,22 @@ public class PositionStringCompetitiveLearner extends CompetitiveLearner<LinePos
           neuron.set(i, stimulus.get(i));
         } else {
           while (neuron.get(i) == stimulus.get(i)) {
-            neuron.set(i, neuron.randomElement(i));
+            neuron.set(i, neuron.randomElement());
           }
         }
       });
+
+      // Adjustments for context
+      if (learningAmount >= 0) {
+        neuron.getContext().becomeSimilarTo(stimulus.getContext(), learningAmount);
+      } else {
+        neuron.getContext().becomeDifferentFrom(stimulus.getContext(), Math.abs(learningAmount));
+      }
   }
 
   @Override
-  void trainSingleStimulus(Vector<LinePositionStringElt> stimulus, double learningRate) {
-    Vector<LinePositionStringElt> winningNeuron = this.getWinningNeuron(stimulus);
+  void trainSingleStimulus(Vector<LinePositionContext, Character> stimulus, double learningRate) {
+    Vector<LinePositionContext, Character> winningNeuron = this.getWinningNeuron(stimulus);
     this.trainSelectedNeuron(stimulus, winningNeuron, learningRate);
   }
 }

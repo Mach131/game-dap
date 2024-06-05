@@ -4,16 +4,13 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import org.antlr.v4.runtime.CharStreams;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import edu.mit.gamedap.generator.datatypes.LinePositionStringElt;
+import edu.mit.gamedap.generator.datatypes.EmptyContext;
+import edu.mit.gamedap.generator.datatypes.LinePositionContext;
 import edu.mit.gamedap.generator.parsers.PositionalLearningPrimer;
 import edu.mit.gamedap.generator.parsers.SampsonParser;
-import edu.mit.gamedap.generator.parsers.SampsonParser.ParseResults;
+import edu.mit.gamedap.generator.parsers.StringParseLearningPrimer;
 
 /**
  * Hello world!
@@ -52,9 +49,15 @@ public class GrammarGeneratorExample
             String inputText = IOUtils.toString(is, "UTF-8");
             System.out.println(inputText);
             System.out.println("---");
-            SampsonParser<LinePositionStringElt> sp = new SampsonParser<>(3, SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
-            SampsonParser<LinePositionStringElt>.ParseResults results = sp.parse(inputText,
-                new PositionalLearningPrimer(300, SampsonParser.DEFAULT_LEARNING_RATE, 250));
+
+            // SampsonParser<EmptyContext, Character> sp = new SampsonParser<>(3, SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
+            // SampsonParser<EmptyContext, Character>.ParseResults results = sp.parse(inputText,
+            //     new StringParseLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250));
+
+            SampsonParser<LinePositionContext, Character> sp = new SampsonParser<>(3, SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
+            SampsonParser<LinePositionContext, Character>.ParseResults results = sp.parse(inputText,
+                new PositionalLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250));
+
             System.out.println(results.getRecordFormat());
             for (List<String> fieldSet : results.getRecordFields()) {
                 System.out.println(fieldSet);

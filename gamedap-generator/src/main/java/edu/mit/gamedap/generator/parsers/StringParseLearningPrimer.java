@@ -1,28 +1,20 @@
 package edu.mit.gamedap.generator.parsers;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import edu.mit.gamedap.generator.Utils;
+import edu.mit.gamedap.generator.datatypes.EmptyContext;
 import edu.mit.gamedap.generator.datatypes.StringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
 import edu.mit.gamedap.generator.learners.CompetitiveLearner;
 import edu.mit.gamedap.generator.learners.FSCLStringLearner;
-import edu.mit.gamedap.generator.learners.StringCompetitiveLearner;
 
 /**
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
  */
-public class StringParseLearningPrimer implements ParseLearningPrimer<Character> {
+public class StringParseLearningPrimer implements ParseLearningPrimer<EmptyContext, Character> {
   private final int neuronCount;
   private final double learningRate;
   private final int trainingEpochs;
@@ -40,10 +32,10 @@ public class StringParseLearningPrimer implements ParseLearningPrimer<Character>
   }
 
   @Override
-  public List<Vector<Character>> makeSubstringVectors(String text, int w, Set<Character> characterSet) {
+  public List<Vector<EmptyContext, Character>> makeSubstringVectors(String text, int w, Set<Character> characterSet) {
     assert(w <= text.length());
 
-    List<Vector<Character>> result = new ArrayList<>();
+    List<Vector<EmptyContext, Character>> result = new ArrayList<>();
     for (int i = 0; i <= text.length() - w; i++) {
       result.add(new StringVector(
         text.substring(i, i + w), characterSet));
@@ -53,8 +45,9 @@ public class StringParseLearningPrimer implements ParseLearningPrimer<Character>
   }
 
   @Override
-  public List<VectorCluster<Character>> assignVectorClusters(List<Vector<Character>> substrings, Set<Character> characterSet) {
-    CompetitiveLearner<Character> cl = new FSCLStringLearner(learningRate, characterSet);
+  public List<VectorCluster<EmptyContext, Character>> assignVectorClusters(List<Vector<EmptyContext, Character>> substrings,
+      Set<Character> characterSet) {
+    CompetitiveLearner<EmptyContext, Character> cl = new FSCLStringLearner(learningRate, characterSet);
     cl.initialize(neuronCount, substrings);
     cl.train(trainingEpochs);
     return cl.cluster();

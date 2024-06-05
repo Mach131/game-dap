@@ -2,9 +2,7 @@ package edu.mit.gamedap.generator.parsers;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,19 +10,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import edu.mit.gamedap.generator.Utils;
-import edu.mit.gamedap.generator.datatypes.StringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 import edu.mit.gamedap.generator.datatypes.VectorCluster;
-import edu.mit.gamedap.generator.learners.CompetitiveLearner;
-import edu.mit.gamedap.generator.learners.FSCLStringLearner;
-import edu.mit.gamedap.generator.learners.StringCompetitiveLearner;
+import edu.mit.gamedap.generator.datatypes.VectorContext;
 
 /**
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
  */
-public class SampsonParser<T> {
+public class SampsonParser<C extends VectorContext, T> {
   public static final int DEFAULT_NEURON_COUNT = 100;
-  public static final double DEFAULT_LEARNING_RATE = 0.2;
+  public static final double DEFAULT_LEARNING_RATE = 0.1;
   public static final int DEFAULT_TRAINING_EPOCHS = 100;
   public static final double DEFAULT_CLUSTER_STDDEV_THRESH = 0.001;
 
@@ -114,13 +109,13 @@ public class SampsonParser<T> {
    * @param vectorClusters A list of vector clusters
    * @return A mapping between every vector included in vectorClusters and their calculated popularity
    */
-  Map<Vector<T>, Double> calculateVectorPopularities(List<VectorCluster<T>> vectorClusters) {
-    Map<Vector<T>, Double> result = new HashMap<>();
-    for (VectorCluster<T> cluster : vectorClusters) {
+  Map<Vector<C, T>, Double> calculateVectorPopularities(List<VectorCluster<C, T>> vectorClusters) {
+    Map<Vector<C, T>, Double> result = new HashMap<>();
+    for (VectorCluster<C, T> cluster : vectorClusters) {
       if (cluster.getDistanceStdDev() < clusterStddevThresh) {
         result.putAll(calculateSingleClusterPopularities(cluster));
       } else {
-        for (Vector<T> vector : cluster.getVectors()) {
+        for (Vector<C, T> vector : cluster.getVectors()) {
           result.put(vector, 0.0);
         }
       }
@@ -133,7 +128,7 @@ public class SampsonParser<T> {
    * 
    * @see SampsonParser#calculateVectorPopularities(List)
    */
-  private Map<Vector<T>, Double> calculateSingleClusterPopularities(VectorCluster<T> vectorCluster) {
+  private Map<Vector<C, T>, Double> calculateSingleClusterPopularities(VectorCluster<C, T> vectorCluster) {
     double size = vectorCluster.getVectors().size();
     return vectorCluster.getVectors().stream()
       .collect(Collectors.toMap(Function.identity(), x -> size));
@@ -149,8 +144,8 @@ public class SampsonParser<T> {
    * 
    * @return A list of the identified delimiter candidates, in the order they appear
    */
-  private List<String> findDelimiters(String text, List<Vector<T>> substringVectors,
-      Map<Vector<T>, Double> popularities, double popularityThreshold) {
+  private List<String> findDelimiters(String text, List<Vector<C, T>> substringVectors,
+      Map<Vector<C, T>, Double> popularities, double popularityThreshold) {
     List<Integer> delimiterStarts = new ArrayList<>();
     List<Integer> delimiterEnds = new ArrayList<>();
     int lastDelimiterEnd = -1;
@@ -158,7 +153,7 @@ public class SampsonParser<T> {
 
     // Identify regions of text with delimiters
     for (int i = 0; i < substringVectors.size(); i++) {
-      Vector<T> vector = substringVectors.get(i);
+      Vector<C, T> vector = substringVectors.get(i);
       if (popularities.get(vector) >= popularityThreshold) {
         // Check if this can be merged with the previous delimiter
         if (i <= lastDelimiterEnd) {
@@ -228,23 +223,32 @@ public class SampsonParser<T> {
    * @return The results of parsing through Competitive Learning and Vector Quantization
    * @see ParseResults
    */
-  public ParseResults parse(String text, ParseLearningPrimer<T> primer) {
+  public ParseResults parse(String text, ParseLearningPrimer<C, T> primer) {
     Set<Character> characterSet = buildCharacterSet(text);
-    List<Vector<T>> substrings = primer.makeSubstringVectors(text, this.w, characterSet);
-    List<VectorCluster<T>> clusters = primer.assignVectorClusters(substrings, characterSet);
+    List<Vector<C, T>> substrings = primer.makeSubstringVectors(text, this.w, characterSet);
+    List<VectorCluster<C, T>> clusters = primer.assignVectorClusters(substrings, characterSet);
 
     // TODO: break into helper methods
 
     // Build popularity histogram
-    for (VectorCluster<T> cluster : clusters) {
+    for (VectorCluster<C, T> cluster : clusters) {
       System.out.println(cluster.info());
     }
     System.out.println("---");
-    Map<Vector<T>, Double> popularities = calculateVectorPopularities(clusters);
+    Map<Vector<C, T>, Double> popularities = calculateVectorPopularities(clusters);
     
-    System.out.println(Utils.makeHistogram(popularities.values().stream().filter(x -> x>0).toList()));
-    double globalMode = Utils.calculateMode(popularities.values().stream().filter(x -> x>0).toList());
+    Map<Double, Integer> popularityHistogram = Utils.makeHistogram(popularities.values().stream().filter(x -> x>0).toList());
+    Map<Double, List<Vector<C, T>>> popularityMap = new HashMap<>();
+    for (double popularity : popularityHistogram.keySet()) {
+      popularityMap.put(popularity, popularities.keySet().stream().filter(x -> popularities.get(x) == popularity).toList());
+    }
+
+    System.out.println(popularityHistogram);
     System.out.println("-----");
+    System.out.println(popularityMap);
+    
+    System.out.println("-----");
+    double globalMode = Utils.calculateMode(popularities.values().stream().filter(x -> x>0).toList());
 
     // Identify possible delimiters
     List<String> delimiters = findDelimiters(text, substrings, popularities, globalMode);

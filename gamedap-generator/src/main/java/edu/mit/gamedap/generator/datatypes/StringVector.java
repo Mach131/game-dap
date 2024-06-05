@@ -1,8 +1,6 @@
 package edu.mit.gamedap.generator.datatypes;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -14,7 +12,7 @@ import java.util.stream.Collectors;
  * (the number of characters that differ between two strings), and random elements are based
  * on either the characters in the set string or a provided character set.
  */
-public class StringVector implements Vector<Character> {
+public class StringVector implements Vector<EmptyContext, Character> {
 
   private String value;
   private final Set<Character> characterSet;
@@ -68,6 +66,11 @@ public class StringVector implements Vector<Character> {
   }
 
   @Override
+  public EmptyContext getContext() {
+    return new EmptyContext();
+  }
+
+  @Override
   public void randomize() {
     this.value = this.makeRandomString(this.size());
   }
@@ -84,11 +87,6 @@ public class StringVector implements Vector<Character> {
   public Character randomElement() {
     Random random = new Random();
     return this.characterList.get(random.nextInt(this.characterList.size()));
-  }
-
-  @Override
-  public Character randomElement(int index) {
-    return this.randomElement();
   }
 
   @Override
@@ -111,7 +109,7 @@ public class StringVector implements Vector<Character> {
   }
 
   @Override
-  public double distance(Vector<Character> other) {
+  public double distance(Vector<EmptyContext, Character> other) {
     assert(this.size() == other.size());
 
     double distance = 0;

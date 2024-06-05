@@ -1,12 +1,11 @@
 package edu.mit.gamedap.generator.learners;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.mit.gamedap.generator.datatypes.LinePositionStringElt;
+import edu.mit.gamedap.generator.datatypes.LinePositionContext;
 import edu.mit.gamedap.generator.datatypes.Vector;
 
 /**
@@ -15,10 +14,10 @@ import edu.mit.gamedap.generator.datatypes.Vector;
  * https://github.com/sampsyo/ap/blob/master/code/cl/fscl.py 
  */
 public class FSCLPositionStringLearner extends PositionStringCompetitiveLearner {
-  private final Map<Vector<LinePositionStringElt>, Integer> neuronWins;
+  private final Map<Vector<LinePositionContext, Character>, Integer> neuronWins;
   private final double rivalPenalty;
 
-  public FSCLPositionStringLearner(double learningRate, double maxPosition, Set<Character> characterSet) {
+  public FSCLPositionStringLearner(double learningRate, long maxPosition, Set<Character> characterSet) {
     super(learningRate, maxPosition, characterSet);
     this.neuronWins = new HashMap<>();
     this.rivalPenalty = -learningRate;
@@ -31,23 +30,23 @@ public class FSCLPositionStringLearner extends PositionStringCompetitiveLearner 
   }
 
   @Override
-  public void initialize(int neuronCount, List<Vector<LinePositionStringElt>> stimuli) {
+  public void initialize(int neuronCount, List<Vector<LinePositionContext, Character>> stimuli) {
     super.initialize(neuronCount, stimuli);
     neuronWins.clear();
   }
   
 
   @Override
-  double getNeuronActivation(Vector<LinePositionStringElt> neuron, Vector<LinePositionStringElt> stimulus) {
+  double getNeuronActivation(Vector<LinePositionContext, Character> neuron, Vector<LinePositionContext, Character> stimulus) {
     int nw = neuronWins.getOrDefault(neuron, 0);
     return nw * neuron.distance(stimulus);
   }
   
   @Override
-  void trainSingleStimulus(Vector<LinePositionStringElt> stimulus, double learningRate) {
-    List<Vector<LinePositionStringElt>> winningNeurons = this.getWinningNeurons(stimulus, 2);
-    Vector<LinePositionStringElt> winner = winningNeurons.get(0);
-    Vector<LinePositionStringElt> rival = winningNeurons.get(1);
+  void trainSingleStimulus(Vector<LinePositionContext, Character> stimulus, double learningRate) {
+    List<Vector<LinePositionContext, Character>> winningNeurons = this.getWinningNeurons(stimulus, 2);
+    Vector<LinePositionContext, Character> winner = winningNeurons.get(0);
+    Vector<LinePositionContext, Character> rival = winningNeurons.get(1);
 
     neuronWins.merge(winner, 1, Integer::sum);
     this.trainSelectedNeuron(stimulus, winner, learningRate);

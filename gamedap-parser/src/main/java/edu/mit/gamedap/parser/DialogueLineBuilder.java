@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.antlr.v4.runtime.tree.*;
-
 import edu.mit.gamedap.parser.GeneratedGrammarParser.PairContext;
 import edu.mit.gamedap.parser.GeneratedGrammarParser.TitleContext;
 

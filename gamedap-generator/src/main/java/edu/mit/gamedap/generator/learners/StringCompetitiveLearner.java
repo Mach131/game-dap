@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import edu.mit.gamedap.generator.datatypes.EmptyContext;
 import edu.mit.gamedap.generator.datatypes.StringVector;
 import edu.mit.gamedap.generator.datatypes.Vector;
 
@@ -14,7 +15,7 @@ import edu.mit.gamedap.generator.datatypes.Vector;
  * 
  * @see CompetitiveLearner
  */
-public class StringCompetitiveLearner extends CompetitiveLearner<Character> {
+public class StringCompetitiveLearner extends CompetitiveLearner<EmptyContext, Character> {
 
   private final Set<Character> characterSet;
 
@@ -30,12 +31,12 @@ public class StringCompetitiveLearner extends CompetitiveLearner<Character> {
   }
 
   @Override
-  Vector<Character> generateNeuron(int size) {
+  Vector<EmptyContext, Character> generateNeuron(int size) {
     return new StringVector(size, this.characterSet);
   }
 
   @Override
-  double getNeuronActivation(Vector<Character> neuron, Vector<Character> stimulus) {
+  double getNeuronActivation(Vector<EmptyContext, Character> neuron, Vector<EmptyContext, Character> stimulus) {
     return neuron.distance(stimulus);
   }
 
@@ -49,7 +50,7 @@ public class StringCompetitiveLearner extends CompetitiveLearner<Character> {
    * @param learningAmount The proportion of indices to be changed; elements in the neuron will become equal
    * to those in the stimulus if this is positive, and vice-versa if this is negative.
    */
-  void trainSelectedNeuron(Vector<Character> stimulus, Vector<Character> neuron, double learningAmount) {
+  void trainSelectedNeuron(Vector<EmptyContext, Character> stimulus, Vector<EmptyContext, Character> neuron, double learningAmount) {
     // Find the differing indices if learningAmount is positive, or the matching ones if negative
     List<Integer> targetIndices = new ArrayList<>(IntStream.range(0, stimulus.size())
       .filter(i -> (stimulus.get(i) == neuron.get(i)) != (learningAmount >= 0))
@@ -75,8 +76,8 @@ public class StringCompetitiveLearner extends CompetitiveLearner<Character> {
   }
 
   @Override
-  void trainSingleStimulus(Vector<Character> stimulus, double learningRate) {
-    Vector<Character> winningNeuron = this.getWinningNeuron(stimulus);
+  void trainSingleStimulus(Vector<EmptyContext, Character> stimulus, double learningRate) {
+    Vector<EmptyContext, Character> winningNeuron = this.getWinningNeuron(stimulus);
     this.trainSelectedNeuron(stimulus, winningNeuron, learningRate);
   }
 }
