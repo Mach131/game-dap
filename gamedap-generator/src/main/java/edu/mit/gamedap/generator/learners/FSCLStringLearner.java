@@ -16,15 +16,18 @@ import edu.mit.gamedap.generator.datatypes.Vector;
 public class FSCLStringLearner extends StringCompetitiveLearner {
   private final Map<Vector<EmptyContext, Character>, Integer> neuronWins;
   private final double rivalPenalty;
+  private final double contextWeight;
 
-  public FSCLStringLearner(double learningRate, Set<Character> characterSet) {
-    super(learningRate, characterSet);
+  public FSCLStringLearner(double learningRate, double contextWeight, Set<Character> characterSet) {
+    super(learningRate, contextWeight, characterSet);
+    this.contextWeight = contextWeight;
     this.neuronWins = new HashMap<>();
     this.rivalPenalty = -learningRate;
   }
 
-  public FSCLStringLearner(double learningRate, double rivalPenalty, Set<Character> characterSet) {
-    super(learningRate, characterSet);
+  public FSCLStringLearner(double learningRate, double contextWeight, double rivalPenalty, Set<Character> characterSet) {
+    super(learningRate, contextWeight, characterSet);
+    this.contextWeight = contextWeight;
     this.neuronWins = new HashMap<>();
     this.rivalPenalty = rivalPenalty;
   }
@@ -39,7 +42,7 @@ public class FSCLStringLearner extends StringCompetitiveLearner {
   @Override
   double getNeuronActivation(Vector<EmptyContext, Character> neuron, Vector<EmptyContext, Character> stimulus) {
     int nw = neuronWins.getOrDefault(neuron, 0);
-    return nw * neuron.distance(stimulus);
+    return nw * neuron.distance(stimulus, contextWeight);
   }
   
   @Override

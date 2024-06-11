@@ -18,17 +18,25 @@ public class StringParseLearningPrimer implements ParseLearningPrimer<EmptyConte
   private final int neuronCount;
   private final double learningRate;
   private final int trainingEpochs;
+  private final double contextWeight;
 
   public StringParseLearningPrimer() {
     this.neuronCount = SampsonParser.DEFAULT_NEURON_COUNT;
     this.learningRate = SampsonParser.DEFAULT_LEARNING_RATE;
     this.trainingEpochs = SampsonParser.DEFAULT_TRAINING_EPOCHS;
+    this.contextWeight = 1.0;
   }
 
-  public StringParseLearningPrimer(int neuronCount, double learningRate, int trainingEpochs) {
+  public StringParseLearningPrimer(int neuronCount, double learningRate, int trainingEpochs, double contextWeight) {
     this.neuronCount = neuronCount;
     this.learningRate = learningRate;
     this.trainingEpochs = trainingEpochs;
+    this.contextWeight = contextWeight;
+  }
+
+  @Override
+  public double getContextWeight() {
+    return this.contextWeight;
   }
 
   @Override
@@ -47,7 +55,7 @@ public class StringParseLearningPrimer implements ParseLearningPrimer<EmptyConte
   @Override
   public List<VectorCluster<EmptyContext, Character>> assignVectorClusters(List<Vector<EmptyContext, Character>> substrings,
       Set<Character> characterSet) {
-    CompetitiveLearner<EmptyContext, Character> cl = new FSCLStringLearner(learningRate, characterSet);
+    CompetitiveLearner<EmptyContext, Character> cl = new FSCLStringLearner(learningRate, contextWeight, characterSet);
     cl.initialize(neuronCount, substrings);
     cl.train(trainingEpochs);
     return cl.cluster();

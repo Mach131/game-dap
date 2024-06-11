@@ -54,9 +54,10 @@ public class GrammarGeneratorExample
             // SampsonParser<EmptyContext, Character>.ParseResults results = sp.parse(inputText,
             //     new StringParseLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250));
 
-            SampsonParser<LinePositionContext, Character> sp = new SampsonParser<>(3, SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH);
+            SampsonParser<LinePositionContext, Character> sp = new SampsonParser<>(2,
+                SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH, SampsonParser.DEFAULT_CONTEXT_WEIGHT_SIGNIFICANCE_RATIO);
             SampsonParser<LinePositionContext, Character>.ParseResults results = sp.parse(inputText,
-                new PositionalLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250));
+                new PositionalLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250, 1.3));
 
             System.out.println(results.getRecordFormat());
             for (List<String> fieldSet : results.getRecordFields()) {

@@ -16,17 +16,20 @@ import edu.mit.gamedap.generator.datatypes.Vector;
 public class FSCLPositionStringLearner extends PositionStringCompetitiveLearner {
   private final Map<Vector<LinePositionContext, Character>, Integer> neuronWins;
   private final double rivalPenalty;
+  private final double contextWeight;
 
-  public FSCLPositionStringLearner(double learningRate, long maxPosition, Set<Character> characterSet) {
-    super(learningRate, maxPosition, characterSet);
+  public FSCLPositionStringLearner(double learningRate, double contextWeight, long maxPosition, Set<Character> characterSet) {
+    super(learningRate, contextWeight, maxPosition, characterSet);
     this.neuronWins = new HashMap<>();
     this.rivalPenalty = -learningRate;
+    this.contextWeight = contextWeight;
   }
 
-  public FSCLPositionStringLearner(double learningRate, double rivalPenalty, int maxPosition, Set<Character> characterSet) {
-    super(learningRate, maxPosition, characterSet);
+  public FSCLPositionStringLearner(double learningRate, double contextWeight, double rivalPenalty, int maxPosition, Set<Character> characterSet) {
+    super(learningRate, contextWeight, maxPosition, characterSet);
     this.neuronWins = new HashMap<>();
     this.rivalPenalty = rivalPenalty;
+    this.contextWeight = contextWeight;
   }
 
   @Override
@@ -39,7 +42,7 @@ public class FSCLPositionStringLearner extends PositionStringCompetitiveLearner 
   @Override
   double getNeuronActivation(Vector<LinePositionContext, Character> neuron, Vector<LinePositionContext, Character> stimulus) {
     int nw = neuronWins.getOrDefault(neuron, 0);
-    return nw * neuron.distance(stimulus);
+    return nw * neuron.distance(stimulus, this.contextWeight);
   }
   
   @Override

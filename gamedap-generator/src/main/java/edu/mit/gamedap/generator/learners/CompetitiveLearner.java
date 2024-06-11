@@ -19,9 +19,11 @@ public abstract class CompetitiveLearner<C extends VectorContext, T> {
   private final List<Vector<C, T>> stimuli;
   private final List<Vector<C, T>> neurons;
   private final double learningRate;
+  private final double contextWeight;
 
-  public CompetitiveLearner(double learningRate) {
+  public CompetitiveLearner(double learningRate, double contextWeight) {
     this.learningRate = learningRate;
+    this.contextWeight = contextWeight;
     this.stimuli = new ArrayList<>();
     this.neurons = new ArrayList<>();
   }
@@ -121,11 +123,11 @@ public abstract class CompetitiveLearner<C extends VectorContext, T> {
    */
   public int quantize(Vector<C, T> stimulus) {
     int idx = 0;
-    double minDist = this.neurons.get(0).distance(stimulus);
+    double minDist = this.neurons.get(0).distance(stimulus, this.contextWeight);
 
     if (this.neurons.size() > 1) {
       for (int i = 0; i < this.neurons.size(); i++) {
-        double dist = this.neurons.get(i).distance(stimulus);
+        double dist = this.neurons.get(i).distance(stimulus, this.contextWeight);
         if (dist < minDist) {
           idx = i;
           minDist = dist;

@@ -119,6 +119,11 @@ public class LinePositionStringVector implements Vector<LinePositionContext, Cha
 
   @Override
   public double distance(Vector<LinePositionContext, Character> other) {
+    return this.distance(other, 1.0);
+  }
+
+  @Override
+  public double distance(Vector<LinePositionContext, Character> other, double contextWeight) {
     assert(this.size() == other.size());
 
     double distance = 0;
@@ -128,7 +133,7 @@ public class LinePositionStringVector implements Vector<LinePositionContext, Cha
       }
     }
 
-    distance += this.getContext().contextDistance(other.getContext());
+    distance += this.getContext().contextDistance(other.getContext()) * contextWeight;
 
     return distance;
   }

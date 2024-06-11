@@ -9,7 +9,7 @@ import java.util.Random;
  */
 public class LinePositionContext implements VectorContext {
 
-    private static final long LINE_POSITION_WEIGHTING = 30;
+    private static final long LINE_POSITION_WEIGHTING = 20;
     private static final double DISTANCE_CONST = 1 / (1 - (1 / Math.E)); // Based on _linePositionConverter
 
     private long positionIndex;

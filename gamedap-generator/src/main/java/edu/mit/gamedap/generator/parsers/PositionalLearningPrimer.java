@@ -22,17 +22,20 @@ public class PositionalLearningPrimer implements ParseLearningPrimer<LinePositio
   private final int neuronCount;
   private final double learningRate;
   private final int trainingEpochs;
+  private final double contextWeight;
 
   public PositionalLearningPrimer() {
     this.neuronCount = SampsonParser.DEFAULT_NEURON_COUNT;
     this.learningRate = SampsonParser.DEFAULT_LEARNING_RATE;
     this.trainingEpochs = SampsonParser.DEFAULT_TRAINING_EPOCHS;
+    this.contextWeight = 1.0;
   }
 
-  public PositionalLearningPrimer(int neuronCount, double learningRate, int trainingEpochs) {
+  public PositionalLearningPrimer(int neuronCount, double learningRate, int trainingEpochs, double contextWeight) {
     this.neuronCount = neuronCount;
     this.learningRate = learningRate;
     this.trainingEpochs = trainingEpochs;
+    this.contextWeight = contextWeight;
   }
 
   /**
@@ -45,6 +48,11 @@ public class PositionalLearningPrimer implements ParseLearningPrimer<LinePositio
     return vecs.stream()
         .map((vec) -> ((LinePositionContext) vec.getContext()).getPositionIndex())
         .reduce(0L, (a, b) -> Math.max(a, b));
+  }
+
+  @Override
+  public double getContextWeight() {
+    return this.contextWeight;
   }
 
   @Override
@@ -68,7 +76,7 @@ public class PositionalLearningPrimer implements ParseLearningPrimer<LinePositio
   public List<VectorCluster<LinePositionContext, Character>> assignVectorClusters(List<Vector<LinePositionContext, Character>> substrings,
       Set<Character> characterSet) {
     long maxPosition = this.getMaxPosition(substrings);
-    CompetitiveLearner<LinePositionContext, Character> cl = new FSCLPositionStringLearner(learningRate, maxPosition, characterSet);
+    CompetitiveLearner<LinePositionContext, Character> cl = new FSCLPositionStringLearner(learningRate, contextWeight, maxPosition, characterSet);
     cl.initialize(neuronCount, substrings);
     cl.train(trainingEpochs);
     return cl.cluster();

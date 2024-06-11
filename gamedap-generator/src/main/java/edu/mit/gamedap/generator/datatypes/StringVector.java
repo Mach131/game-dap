@@ -110,6 +110,11 @@ public class StringVector implements Vector<EmptyContext, Character> {
 
   @Override
   public double distance(Vector<EmptyContext, Character> other) {
+    return this.distance(other, 1.0);
+  }
+
+  @Override
+  public double distance(Vector<EmptyContext, Character> other, double contextWeight) {
     assert(this.size() == other.size());
 
     double distance = 0;

@@ -18,7 +18,8 @@ import edu.mit.gamedap.generator.datatypes.Vector;
 public class PositionStringCompetitiveLearner extends CompetitiveLearner<LinePositionContext, Character> {
 
   private final Set<Character> characterSet;
-  private long maxPosition;
+  private final double contextWeight;
+  private final long maxPosition;
 
   /**
    * Initializes the learner with a set of characters to use for neuron generation.
@@ -27,8 +28,9 @@ public class PositionStringCompetitiveLearner extends CompetitiveLearner<LinePos
    * @param maxPosition The maximum line position of any vector for neuron generation
    * @param characterSet The set of characters to use for neuron generation
    */
-  public PositionStringCompetitiveLearner(double learningRate, long maxPosition, Set<Character> characterSet) {
-    super(learningRate);
+  public PositionStringCompetitiveLearner(double learningRate, double contextWeight, long maxPosition, Set<Character> characterSet) {
+    super(learningRate, contextWeight);
+    this.contextWeight = contextWeight;
     this.maxPosition = maxPosition;
     this.characterSet = characterSet;
   }
@@ -40,7 +42,7 @@ public class PositionStringCompetitiveLearner extends CompetitiveLearner<LinePos
 
   @Override
   double getNeuronActivation(Vector<LinePositionContext, Character> neuron, Vector<LinePositionContext, Character> stimulus) {
-    return neuron.distance(stimulus);
+    return neuron.distance(stimulus, this.contextWeight);
   }
 
   /**

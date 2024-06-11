@@ -61,4 +61,14 @@ public interface Vector<C extends VectorContext, T> {
    * @return the distance between this vector and the other
    */
   public double distance(Vector<C, T> other);
+
+  /**
+   * Similar to the normal distance method, but increases the weight of the context's distance, such
+   * that the maximum distance is the vector size + (context weight * context size).
+   * 
+   * @param other the "destination" vector
+   * @param contextWeight the amount by which to multiply the context distance
+   * @return the weighted distance between this vector and the other
+   */
+  public double distance(Vector<C, T> other, double contextWeight);
 }

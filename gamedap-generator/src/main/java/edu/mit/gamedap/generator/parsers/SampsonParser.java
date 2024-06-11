@@ -2,6 +2,7 @@ package edu.mit.gamedap.generator.parsers;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +23,11 @@ public class SampsonParser<C extends VectorContext, T> {
   public static final double DEFAULT_LEARNING_RATE = 0.1;
   public static final int DEFAULT_TRAINING_EPOCHS = 100;
   public static final double DEFAULT_CLUSTER_STDDEV_THRESH = 0.001;
+  public static final double DEFAULT_CONTEXT_WEIGHT_SIGNIFICANCE_RATIO = 1 / Math.E;
 
   private final int w;
   private final double clusterStddevThresh;
+  private final double contextWeightSignificanceRatio;
 
   /**
    * Contains the results of running the SampsonParser.
@@ -68,12 +71,14 @@ public class SampsonParser<C extends VectorContext, T> {
     assert(w > 0);
     this.w = w;
     this.clusterStddevThresh = DEFAULT_CLUSTER_STDDEV_THRESH;
+    this.contextWeightSignificanceRatio = DEFAULT_CONTEXT_WEIGHT_SIGNIFICANCE_RATIO;
   }
 
-  public SampsonParser(int w, double clusterStddevThresh) {
+  public SampsonParser(int w, double clusterStddevThresh, double contextWeightSignificanceRatio) {
     assert(w > 0);
     this.w = w;
     this.clusterStddevThresh = clusterStddevThresh;
+    this.contextWeightSignificanceRatio = contextWeightSignificanceRatio;
   }
 
   /**
@@ -132,6 +137,47 @@ public class SampsonParser<C extends VectorContext, T> {
     double size = vectorCluster.getVectors().size();
     return vectorCluster.getVectors().stream()
       .collect(Collectors.toMap(Function.identity(), x -> size));
+  }
+
+  /**
+   * Experimental: finds the average distance between (undropped) clusters of the same size,
+   * for each cluster size
+   * 
+   * @param vectorClusters A list of vector clusters
+   * @param contextWeight Weighting for context distance
+   * @return A mapping between cluster sizes and the average distance between valid cluster centers for that size
+   */
+  Map<Integer, Double> makeClusterSizeDistanceMap(List<VectorCluster<C, T>> vectorClusters, double contextWeight) {
+    Map<Integer, Double> totalDistances = new HashMap<>();
+    Map<Integer, Integer> numDistances = new HashMap<>();
+    Map<Integer, List<VectorCluster<C, T>>> checkedClusters = new HashMap<>();
+    for (VectorCluster<C, T> cluster : vectorClusters) {
+      if (cluster.getDistanceStdDev() < clusterStddevThresh) {
+        int size = cluster.getVectors().size();
+        if (!checkedClusters.containsKey(size)) {
+          checkedClusters.put(size, new ArrayList<>());
+        }
+        List<VectorCluster<C, T>> sizeClusters = checkedClusters.get(size);
+        
+        double totalNewDistance = 0;
+        for (VectorCluster<C, T> otherCluster : sizeClusters) {
+          totalNewDistance += cluster.getCenter().distance(otherCluster.getCenter(), contextWeight);
+        }
+        totalDistances.put(size, totalDistances.getOrDefault(size, 0.0) + totalNewDistance);
+        numDistances.put(size, numDistances.getOrDefault(size, 0) + sizeClusters.size());
+        sizeClusters.add(cluster);
+      }
+    }
+
+    Map<Integer, Double> result = new HashMap<>();
+    for (Integer size : totalDistances.keySet()) {
+      if (numDistances.get(size) > 0) {
+        result.put(size, totalDistances.get(size) / numDistances.get(size));
+      } else {
+        result.put(size, w * 1.0);
+      }
+    }
+    return result;
   }
 
   /**
@@ -245,13 +291,26 @@ public class SampsonParser<C extends VectorContext, T> {
 
     System.out.println(popularityHistogram);
     System.out.println("-----");
-    System.out.println(popularityMap);
+    //System.out.println(popularityMap);
+    Map<Integer, Double> sizeDistMap = makeClusterSizeDistanceMap(clusters, primer.getContextWeight());
+    System.out.println(sizeDistMap);
+
     
     System.out.println("-----");
-    double globalMode = Utils.calculateMode(popularities.values().stream().filter(x -> x>0).toList());
+    // double popularityThreshold = Utils.calculateMode(popularities.values().stream().filter(x -> x>0).toList());
+
+    double targetAverageDist = this.w + (primer.getContextWeight() * this.contextWeightSignificanceRatio);
+    int targetPopularity = sizeDistMap.keySet().stream().max(Integer::compare).get();
+    for (int popularity : sizeDistMap.keySet()) {
+      if (sizeDistMap.get(popularity) <= targetAverageDist && popularity < targetPopularity) {
+        targetPopularity = popularity;
+      }
+    }
+    
+    double popularityThreshold = targetPopularity * 1.0;
 
     // Identify possible delimiters
-    List<String> delimiters = findDelimiters(text, substrings, popularities, globalMode);
+    List<String> delimiters = findDelimiters(text, substrings, popularities, popularityThreshold);
     System.out.println("----");
     System.out.println(delimiters);
     System.out.println("----");

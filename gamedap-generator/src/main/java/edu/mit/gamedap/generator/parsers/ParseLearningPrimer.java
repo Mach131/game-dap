@@ -10,6 +10,8 @@ import edu.mit.gamedap.generator.datatypes.VectorContext;
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
  */
 public interface ParseLearningPrimer<C extends VectorContext, T> {
+  public double getContextWeight();
+
   /**
    * Create substrings of the input, based on the parsing parameter w.
    * Assumes that w is at least 1 and is less than the length of the text.

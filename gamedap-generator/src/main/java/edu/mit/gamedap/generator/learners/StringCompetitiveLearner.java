@@ -18,6 +18,7 @@ import edu.mit.gamedap.generator.datatypes.Vector;
 public class StringCompetitiveLearner extends CompetitiveLearner<EmptyContext, Character> {
 
   private final Set<Character> characterSet;
+  private final double contextWeight;
 
   /**
    * Initializes the learner with a set of characters to use for neuron generation.
@@ -25,9 +26,10 @@ public class StringCompetitiveLearner extends CompetitiveLearner<EmptyContext, C
    * @param learningRate The extent to which neurons are changed in a single learning step
    * @param characterSet The set of characters to use for neuron generation
    */
-  public StringCompetitiveLearner(double learningRate, Set<Character> characterSet) {
-    super(learningRate);
+  public StringCompetitiveLearner(double learningRate, double contextWeight, Set<Character> characterSet) {
+    super(learningRate, contextWeight);
     this.characterSet = characterSet;
+    this.contextWeight = contextWeight;
   }
 
   @Override
@@ -37,7 +39,7 @@ public class StringCompetitiveLearner extends CompetitiveLearner<EmptyContext, C
 
   @Override
   double getNeuronActivation(Vector<EmptyContext, Character> neuron, Vector<EmptyContext, Character> stimulus) {
-    return neuron.distance(stimulus);
+    return neuron.distance(stimulus, this.contextWeight);
   }
 
   /**
