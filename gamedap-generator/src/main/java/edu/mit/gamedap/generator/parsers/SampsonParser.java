@@ -2,7 +2,6 @@ package edu.mit.gamedap.generator.parsers;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -299,7 +298,8 @@ public class SampsonParser<C extends VectorContext, T> {
     System.out.println("-----");
     // double popularityThreshold = Utils.calculateMode(popularities.values().stream().filter(x -> x>0).toList());
 
-    double targetAverageDist = this.w + (primer.getContextWeight() * this.contextWeightSignificanceRatio);
+    // TODO: figure out how to properly set this with meta vectors
+    double targetAverageDist = this.w - 1 + (primer.getContextWeight() * this.contextWeightSignificanceRatio);
     int targetPopularity = sizeDistMap.keySet().stream().max(Integer::compare).get();
     for (int popularity : sizeDistMap.keySet()) {
       if (sizeDistMap.get(popularity) <= targetAverageDist && popularity < targetPopularity) {
@@ -316,7 +316,6 @@ public class SampsonParser<C extends VectorContext, T> {
     System.out.println("----");
 
     // Identify records by common patterns of delimiters
-    // TODO: test and replace with selectStartingDelimiterIndex
 
     /**start of replaced piece */
     // Map<String, Integer> delimiterHistogram = Utils.makeHistogram(delimiters);

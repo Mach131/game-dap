@@ -9,7 +9,7 @@ import edu.mit.gamedap.generator.datatypes.LinePositionContext;
 import edu.mit.gamedap.generator.datatypes.Vector;
 
 /**
- * A string-basec competitive learner, using the special competitive learning techniques of
+ * A string-based competitive learner, using the special competitive learning techniques of
  * frequency-sensitive learning and rival penalization.
  * https://github.com/sampsyo/ap/blob/master/code/cl/fscl.py 
  */

@@ -11,8 +11,6 @@ import edu.mit.gamedap.generator.datatypes.VectorCluster;
 import edu.mit.gamedap.generator.learners.CompetitiveLearner;
 import edu.mit.gamedap.generator.learners.FSCLPositionStringLearner;
 
-/// TODO: extract different parts so that they can use the same parsing method and stuff
-
 /**
  * Contains parsing methods inspired by https://www.cs.hmc.edu/~asampson/ap/technique.html
  */

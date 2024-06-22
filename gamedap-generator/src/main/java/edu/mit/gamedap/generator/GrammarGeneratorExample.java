@@ -8,6 +8,9 @@ import org.apache.commons.io.IOUtils;
 
 import edu.mit.gamedap.generator.datatypes.EmptyContext;
 import edu.mit.gamedap.generator.datatypes.LinePositionContext;
+import edu.mit.gamedap.generator.datatypes.MetaContext;
+import edu.mit.gamedap.generator.datatypes.Vector;
+import edu.mit.gamedap.generator.parsers.MetaLearningPrimer;
 import edu.mit.gamedap.generator.parsers.PositionalLearningPrimer;
 import edu.mit.gamedap.generator.parsers.SampsonParser;
 import edu.mit.gamedap.generator.parsers.StringParseLearningPrimer;
@@ -54,10 +57,17 @@ public class GrammarGeneratorExample
             // SampsonParser<EmptyContext, Character>.ParseResults results = sp.parse(inputText,
             //     new StringParseLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250));
 
-            SampsonParser<LinePositionContext, Character> sp = new SampsonParser<>(2,
-                SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH, SampsonParser.DEFAULT_CONTEXT_WEIGHT_SIGNIFICANCE_RATIO);
-            SampsonParser<LinePositionContext, Character>.ParseResults results = sp.parse(inputText,
-                new PositionalLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250, 1.3));
+            // SampsonParser<LinePositionContext, Character> sp = new SampsonParser<>(2,
+            //     SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH, SampsonParser.DEFAULT_CONTEXT_WEIGHT_SIGNIFICANCE_RATIO);
+            // SampsonParser<LinePositionContext, Character>.ParseResults results = sp.parse(inputText,
+            //     new PositionalLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250, 1.3));
+
+            SampsonParser<LinePositionContext, Vector<MetaContext<EmptyContext>, Character>> sp = new SampsonParser<>(2,
+                SampsonParser.DEFAULT_CLUSTER_STDDEV_THRESH, SampsonParser.DEFAULT_CONTEXT_WEIGHT_SIGNIFICANCE_RATIO / 1.5);
+            SampsonParser<LinePositionContext, Vector<MetaContext<EmptyContext>, Character>>.ParseResults results = sp.parse(
+                inputText, new MetaLearningPrimer(1000, SampsonParser.DEFAULT_LEARNING_RATE, 250, 1.3,
+                2, 0.025, 16, 1.5, 1));
+
 
             System.out.println(results.getRecordFormat());
             for (List<String> fieldSet : results.getRecordFields()) {
