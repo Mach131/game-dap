@@ -1,0 +1,12 @@
+Club Technician: "What the–?!"
+CT: "What do you want?"
+[Player Input]
+> Sean?
+	Protagonist: "Are you a friend of Sean's?"
+	CT: "No. And seeing how he treats others, I don't think he has any."
+> Step Aside
+	Protagonist: "Step aside and be quiet."
+	CT: "It's cool, I don't want any trouble."
+> Don't Worry
+	Protagonist: "I'm not looking for a fight."
+	CT: "Neither am I. I just do computers and stuff."

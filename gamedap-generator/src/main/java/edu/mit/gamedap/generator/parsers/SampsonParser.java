@@ -3,11 +3,15 @@ package edu.mit.gamedap.generator.parsers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import javax.swing.text.html.Option;
 
 import edu.mit.gamedap.generator.Utils;
 import edu.mit.gamedap.generator.datatypes.Vector;
@@ -34,10 +38,18 @@ public class SampsonParser<C extends VectorContext, T> {
   public class ParseResults {
     private final String recordFormat;
     private final List<List<String>> recordFields;
+    private Optional<ParseResults> parentFormat;
     
     public ParseResults(String recordFormat, List<List<String>> recordFields) {
       this.recordFormat = recordFormat;
       this.recordFields = recordFields;
+      this.parentFormat = Optional.empty();
+    }
+    
+    public ParseResults(String recordFormat, List<List<String>> recordFields, ParseResults parentFormat) {
+      this.recordFormat = recordFormat;
+      this.recordFields = recordFields;
+      this.parentFormat = Optional.of(parentFormat);
     }
 
     /**
@@ -58,6 +70,14 @@ public class SampsonParser<C extends VectorContext, T> {
      */
     public List<List<String>> getRecordFields() {
       return recordFields;
+    }
+
+    public Optional<ParseResults> getParentFormat() {
+      return parentFormat;
+    }
+
+    public void setParent(ParseResults parentFormat) {
+      this.parentFormat = Optional.of(parentFormat);
     }
 
     @Override
@@ -189,8 +209,30 @@ public class SampsonParser<C extends VectorContext, T> {
    * 
    * @return A list of the identified delimiter candidates, in the order they appear
    */
-  private List<String> findDelimiters(String text, List<Vector<C, T>> substringVectors,
+  public List<String> findDelimiters(String text, List<Vector<C, T>> substringVectors,
       Map<Vector<C, T>, Double> popularities, double popularityThreshold) {
+        return findDelimitersHelper(text, substringVectors, popularities, true,
+            popularityThreshold, new HashSet<>());
+  }
+
+  /**
+   * Identifies possible delimiters by combining contiguous substring vectors fitting a given set of popularities.
+   * @param text The input text
+   * @param substringVectors A list of substring vectors from the text
+   * @param popularities A mapping of substring vectors to popularities, including all provided substringVectors
+   * @param targetPopularities The set of popularities to accept as delimiters
+   * 
+   * @return A list of the identified delimiter candidates, in the order they appear
+   */
+  public List<String> findDelimiters(String text, List<Vector<C, T>> substringVectors,
+      Map<Vector<C, T>, Double> popularities, Set<Double> targetPopularities) {
+    return findDelimitersHelper(text, substringVectors, popularities, false,
+        -1, targetPopularities);
+  }
+
+  private List<String> findDelimitersHelper(String text, List<Vector<C, T>> substringVectors,
+      Map<Vector<C, T>, Double> popularities, boolean useThreshold,
+      double popularityThreshold, Set<Double> targetPopularities) {
     List<Integer> delimiterStarts = new ArrayList<>();
     List<Integer> delimiterEnds = new ArrayList<>();
     int lastDelimiterEnd = -1;
@@ -199,7 +241,10 @@ public class SampsonParser<C extends VectorContext, T> {
     // Identify regions of text with delimiters
     for (int i = 0; i < substringVectors.size(); i++) {
       Vector<C, T> vector = substringVectors.get(i);
-      if (popularities.get(vector) >= popularityThreshold) {
+      boolean popularityFit = useThreshold ?
+          popularities.get(vector) >= popularityThreshold :
+          targetPopularities.contains(popularities.get(vector));
+      if (popularityFit) {
         // Check if this can be merged with the previous delimiter
         if (i <= lastDelimiterEnd) {
           lastDelimiterEnd = i + w;
@@ -222,7 +267,45 @@ public class SampsonParser<C extends VectorContext, T> {
       delimiterText.add(delimiter);
     }
 
-    return delimiterText;
+    // experiment
+
+    // first, remove duplicates and substrings
+    Set<String> uniqueDelimiterText = new HashSet<>(delimiterText);
+    Set<String> delimsToRemove = new HashSet<>();
+    for (String checkDelim : uniqueDelimiterText) {
+      for (String compareDelim : uniqueDelimiterText) {
+        if (!checkDelim.equals(compareDelim) && compareDelim.contains(checkDelim)) {
+          delimsToRemove.add(checkDelim);
+          break;
+        }
+      }
+    }
+    for (String removeDelim : delimsToRemove) {
+      uniqueDelimiterText.remove(removeDelim);
+    }
+
+    // then, create a result based on where matching strings appear in the original text
+    Map<Integer, String> delimMap = new HashMap<>();
+    for (String checkDelim : uniqueDelimiterText) {
+      int delimIdx = text.indexOf(checkDelim);
+      while (delimIdx != -1) {
+        assert(!delimMap.containsKey(delimIdx));
+        delimMap.put(delimIdx, checkDelim);
+        delimIdx = text.indexOf(checkDelim, delimIdx+1);
+      }
+    }
+
+    List<String> adjustedDelimiterText = new ArrayList<>();
+    List<Integer> delimIndices = new ArrayList<>(delimMap.keySet());
+    delimIndices.sort(null);
+    for (int delimIndex : delimIndices) {
+      adjustedDelimiterText.add(delimMap.get(delimIndex));
+    }
+
+    // end experiment
+
+    // return delimiterText;
+    return adjustedDelimiterText;
   }
 
   /**
@@ -235,7 +318,7 @@ public class SampsonParser<C extends VectorContext, T> {
    * {@link SampsonParser#findDelimiters(String, List, Map, double) findDelimiters}.
    * @return The index of a selected starting delimiter in the delimiters list.
    */
-  private int selectStartingDelimiterIndex(List<String> delimiters) {
+  protected int selectStartingDelimiterIndex(List<String> delimiters) {
     Map<String, Integer> delimiterHistogram = Utils.makeHistogram(delimiters);
 
     // TODO: account for substrings (basic idea may be to find an initial candidate and test?)
@@ -250,12 +333,12 @@ public class SampsonParser<C extends VectorContext, T> {
     double delimiterSD = Utils.calculateIntegerStdDev(delimiterHistogram.values());
 
     int startingIndex = 0;
-    for (int i = 0; i < delimiters.size(); i++) {
-      if (Math.abs(delimiterHistogram.get(delimiters.get(i)) - delimiterMean) <= delimiterSD) {
-        startingIndex = i;
-        break;
-      }
-    }
+    // for (int i = 0; i < delimiters.size(); i++) {
+    //   if (Math.abs(delimiterHistogram.get(delimiters.get(i)) - delimiterMean) <= delimiterSD) {
+    //     startingIndex = i;
+    //     break;
+    //   }
+    // }
 
     return startingIndex;
   }

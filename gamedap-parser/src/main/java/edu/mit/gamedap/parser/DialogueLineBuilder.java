@@ -62,11 +62,11 @@ public class DialogueLineBuilder extends GeneratedGrammarBaseListener {
             }
 
             if (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) == i) {
+                presentDelims.add(ctx.children.get(i).getText());
                 do {
-                    presentDelims.add(ctx.children.get(i).getText());
                     currentPart ++;
                     dialogueParts.add("");
-                } while (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) != -1);
+                } while (currentPart < delimTokenIndex.size() && delimTokenIndex.get(currentPart) == -1);
             } else {
                 dialogueParts.set(currentPart, dialogueParts.get(currentPart) + ctx.children.get(i).getText());
             }

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
+import static org.apache.commons.text.StringEscapeUtils.escapeCsv;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
@@ -43,7 +44,7 @@ public class ParserExample
 
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             GeneratedGrammarParser parser = new GeneratedGrammarParser(tokens);
-            ParseTree tree = parser.section();
+            ParseTree tree = parser.dialogue();
 
             ParseTreeWalker walker = new ParseTreeWalker();
             DialogueLineBuilder listener = new DialogueLineBuilder(vocabMap);
@@ -60,6 +61,9 @@ public class ParserExample
 
 
             String bodyOutput = escapeHtml4(listener.getTitle());
+            List<List<String>> csvLines = new ArrayList<>();
+            List<String> currentCsvLine = new ArrayList<>();
+            int maxCsvLineLen = 0;
             for (DialogueLine line : listener.getLines()) {
                 for (int i = 0; i < line.numParts(); i ++) {
                     if (i > 0) {
@@ -67,12 +71,38 @@ public class ParserExample
                     }
                     bodyOutput += String.format("<span style=\"background-color:#%s\">%s</span>",
                     colorHexes.get(i), escapeHtml4(line.getPart(i)));
+
+                    List<String> splitPart = new ArrayList<>(List.of(line.getPart(i).split("[\r\n]+")));
+                    currentCsvLine.add(escapeCsv(splitPart.remove(0)));
+                    while (splitPart.size() > 0) {
+                        csvLines.add(currentCsvLine);
+                        maxCsvLineLen = Math.max(maxCsvLineLen, currentCsvLine.size());
+                        currentCsvLine = new ArrayList<>();
+                        currentCsvLine.add(escapeCsv(splitPart.remove(0)));
+                    }
                 }
             }
+            csvLines.add(currentCsvLine);
 
             String htmlOutput = String.format(HTML_OUTLINE, bodyOutput);
 
+            for (List<String> csvLine : csvLines) {
+                while (csvLine.size() < maxCsvLineLen) {
+                    csvLine.add("");
+                }
+            }
+            String csvOutput = "1";
+            for (int i = 1; i < maxCsvLineLen; i ++) {
+                csvOutput += "," + (i+1);
+            }
+            csvOutput += "\n";
+            for (List<String> cvsLine : csvLines) {
+                csvOutput += String.join(",",  cvsLine) + "\n";
+            }
+
             System.out.println(htmlOutput);
+            System.out.println("------");
+            System.out.println(csvOutput);
         } catch (IOException e) {
             System.out.println(e);
         }
